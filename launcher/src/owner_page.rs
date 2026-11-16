@@ -468,6 +468,19 @@ impl Launcher {
                 .into_any_element(),
             ),
         };
+        let offline_btn = ui::button(
+            "owner-offline".into(),
+            tr("Add offline account").into(),
+            Kind::Ghost,
+            &t,
+        )
+        .h(px(44.))
+        .px(px(20.))
+        .on_click(cx.listener(|this, _: &ClickEvent, _, cx| {
+            this.close_owner_screen();
+            this.go(Page::Settings);
+            cx.notify();
+        }));
         let later = ui::button("owner-later".into(), tr("Not now").into(), Kind::Ghost, &t)
             .h(px(44.))
             .px(px(20.))
@@ -482,6 +495,7 @@ impl Launcher {
                 .gap(px(8.))
                 .mt(px(24.))
                 .children(main)
+                .child(offline_btn)
                 .child(later),
         );
         if matches!(state, Shown::Code(..)) {

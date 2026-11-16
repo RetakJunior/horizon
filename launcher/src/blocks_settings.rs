@@ -608,20 +608,23 @@ impl Launcher {
         for (i, a) in self.accounts.accounts.clone().into_iter().enumerate() {
             let plays = selected.as_ref() == Some(&a.uuid);
             let uuid = a.uuid.clone();
+            let is_offline = a.offline;
             let mut actions = div().flex().gap(px(4.));
             if plays {
-                actions = actions.child(
-                    button(format!("offline-{i}"), "Play offline", Kind::Ghost, &t).on_click(
-                        cx.listener(|this, _: &ClickEvent, _, cx| {
-                            let mut accounts = Accounts::load();
-                            accounts.selected = None;
-                            if accounts.save().is_ok() {
-                                this.accounts = accounts;
-                            }
-                            cx.notify();
-                        }),
-                    ),
-                );
+                if !is_offline {
+                    actions = actions.child(
+                        button(format!("offline-{i}"), "Play offline", Kind::Ghost, &t).on_click(
+                            cx.listener(|this, _: &ClickEvent, _, cx| {
+                                let mut accounts = Accounts::load();
+                                accounts.selected = None;
+                                if accounts.save().is_ok() {
+                                    this.accounts = accounts;
+                                }
+                                cx.notify();
+                            }),
+                        ),
+                    );
+                }
             } else {
                 let uuid = uuid.clone();
                 actions = actions.child(
@@ -633,52 +636,68 @@ impl Launcher {
                     ),
                 );
             }
-            let sign_in_progress = self
-                .sign_in_target
-                .as_ref()
-                .filter(|a| a.uuid == uuid)
-                .and_then(|_| match self.sign_in_state.as_ref() {
-                    Some(SignInState::Starting) => Some("Asking Microsoft…"),
-                    Some(SignInState::Code(_)) => Some("Waiting for browser sign-in…"),
-                    Some(SignInState::Working(phase)) => Some(phase.label()),
-                    _ => None,
-                });
+            let sign_in_progress = if is_offline {
+                None
+            } else {
+                self.sign_in_target
+                    .as_ref()
+                    .filter(|a| a.uuid == uuid)
+                    .and_then(|_| match self.sign_in_state.as_ref() {
+                        Some(SignInState::Starting) => Some("Asking Microsoft…"),
+                        Some(SignInState::Code(_)) => Some("Waiting for browser sign-in…"),
+                        Some(SignInState::Working(phase)) => Some(phase.label()),
+                        _ => None,
+                    })
+            };
             let progress = sign_in_progress
                 .or_else(|| self.auth_progress.get(&uuid).map(|phase| phase.label()));
-            let busy = self.auth_busy.contains_key(&uuid) || sign_in_progress.is_some();
-            let status = self.auth_status.get(&uuid);
+            let busy = !is_offline && (self.auth_busy.contains_key(&uuid) || sign_in_progress.is_some());
+            let status = if is_offline { None } else { self.auth_status.get(&uuid) };
             let needs_sign_in =
                 status.is_some_and(|s| s.state == account::session::State::SignInRequired);
             let refresh_id = uuid.clone();
-            let refresh = button(
-                format!("refresh-{i}"),
-                if busy {
-                    "Checking…"
-                } else if needs_sign_in {
-                    "Sign in again"
-                } else {
-                    "Refresh"
-                },
-                Kind::Ghost,
-                &t,
-            );
-            actions = actions.child(if busy {
-                disabled(refresh)
-            } else {
-                refresh.on_click(cx.listener(move |this, _: &ClickEvent, _, cx| {
-                    if needs_sign_in {
-                        this.re_sign_in(&refresh_id);
+            if !is_offline {
+                let refresh = button(
+                    format!("refresh-{i}"),
+                    if busy {
+                        "Checking…"
+                    } else if needs_sign_in {
+                        "Sign in again"
                     } else {
-                        this.refresh_account(refresh_id.clone());
-                    }
-                    cx.notify();
-                }))
-            });
-            let sign_out = button(format!("sign-out-{i}"), "Sign out", Kind::Ghost, &t);
+                        "Refresh"
+                    },
+                    Kind::Ghost,
+                    &t,
+                );
+                actions = actions.child(if busy {
+                    disabled(refresh)
+                } else {
+                    refresh.on_click(cx.listener(move |this, _: &ClickEvent, _, cx| {
+                        if needs_sign_in {
+                            this.re_sign_in(&refresh_id);
+                        } else {
+                            this.refresh_account(refresh_id.clone());
+                        }
+                        cx.notify();
+                    }))
+                });
+            }
+            let sign_out_label = if is_offline { "Remove" } else { "Sign out" };
+            let sign_out = button(format!("sign-out-{i}"), sign_out_label, Kind::Ghost, &t);
             actions = actions.child(if busy {
                 disabled(sign_out)
             } else {
                 sign_out.on_click(cx.listener(move |this, _: &ClickEvent, _, cx| {
+                    if is_offline {
+                        let mut accounts = Accounts::load();
+                        let _ = accounts.remove(account::store(), &uuid);
+                        let _ = accounts.save();
+                        this.accounts = accounts;
+                        this.owner = Some(this.accounts.has_owner(account::store()));
+                        this.load_profile_heads();
+                        cx.notify();
+                        return;
+                    }
                     let Some(generation) = this.begin_auth_job(&uuid) else {
                         return;
                     };
@@ -700,16 +719,23 @@ impl Launcher {
                 }))
             });
             n += 1;
+            let subtitle = if is_offline {
+                if plays {
+                    tr("Offline account · plays")
+                } else {
+                    tr("Offline account")
+                }
+            } else if plays {
+                tr("Microsoft account · plays")
+            } else {
+                tr("Microsoft account")
+            };
             rows = rows.child(account_row(
                 Some(self.profile_heads.draw(Some(&a.uuid), 32., self.scale, &t)),
                 a.name.clone(),
                 Some(
                     div()
-                        .child(tr(if plays {
-                            "Microsoft account · plays"
-                        } else {
-                            "Microsoft account"
-                        }))
+                        .child(subtitle)
                         .child(account_status_line(status, progress, &t))
                         .when(!busy, |row| {
                             row.when_some(status.filter(|s| s.message != s.label()), |row, s| {

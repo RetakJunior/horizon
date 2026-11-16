@@ -238,7 +238,8 @@ fn the_whole_chain() {
                 "slim".into()
             )),
             cape: Some("http://textures.minecraft.net/texture/cape2".into()),
-        }
+       offline: false,
+}
     );
     assert_eq!(secrets.minecraft_token, "mc-token");
     assert_eq!(secrets.xuid.as_deref(), Some("2535400000000000"));
@@ -316,7 +317,8 @@ fn notch() -> Account {
         name: "Notch".into(),
         skin: None,
         cape: None,
-    }
+   offline: false,
+}
 }
 
 /// A signed-in account's secrets: a token good for two hours, and the last ownership answer.
@@ -413,7 +415,8 @@ fn splitscreen_gets_the_other_accounts_that_still_hold() {
         name: name.into(),
         skin: None,
         cape: None,
-    };
+   offline: false,
+};
     let expired = Secrets {
         minecraft_expires_at: 0,
         ..secrets("old", true)
@@ -493,7 +496,8 @@ fn splitscreen_never_hands_over_an_account_sent_back_to_sign_in() {
         name: "Eve".into(),
         skin: None,
         cape: None,
-    };
+   offline: false,
+};
     accounts.add(&store, eve, &refused).unwrap();
     accounts.selected = Some(UUID.into());
     let dir = std::env::temp_dir().join(format!("hz-split-refused-{}", std::process::id()));
@@ -671,7 +675,8 @@ fn any_owner_opens_the_gate_and_the_one_who_plays_brings_the_session() {
         name: "Alex".into(),
         skin: None,
         cape: None,
-    });
+   offline: false,
+});
     accounts.selected = Some("other".into());
     let pass = launch(&ep, Some("test-client"), &store, &mut accounts).unwrap();
     assert!(pass.session.is_none());
@@ -709,7 +714,8 @@ fn the_game_plays_only_as_an_account_that_owns_it() {
         name: "Alex".into(),
         skin: None,
         cape: None,
-    });
+   offline: false,
+});
     accounts.play_as("other").unwrap();
     let refused = launch_for_game(&ep, Some("test-client"), &store, &mut accounts).unwrap_err();
     assert!(refused
@@ -812,7 +818,8 @@ fn accounts_keep_secrets_in_the_store_only() {
         name: "Notch".into(),
         skin: None,
         cape: None,
-    };
+   offline: false,
+};
     let secrets = Secrets {
         refresh_token: "r".into(),
         sign_in_required: false,
@@ -1048,7 +1055,8 @@ fn has_owner_asks_the_selected_account_first() {
                 name: "Other".into(),
                 skin: None,
                 cape: None,
-            },
+           offline: false,
+},
             &secrets("x-token", false),
         )
         .unwrap();
@@ -1114,7 +1122,8 @@ fn session_files_are_private_and_complete() {
         name: "Notch".into(),
         skin: None,
         cape: None,
-    };
+   offline: false,
+};
     let secrets = Secrets {
         refresh_token: "r".into(),
         sign_in_required: false,
@@ -1168,7 +1177,8 @@ fn play_as_picks_a_signed_in_account() {
             name: "Ludo".into(),
             skin: None,
             cape: None,
-        }],
+       offline: false,
+}],
         ..Accounts::default()
     };
     a.play_as("abc").unwrap();
@@ -2436,7 +2446,8 @@ fn a_launch_as_another_account_leaves_the_selected_one() {
         name: "Alex".into(),
         skin: None,
         cape: None,
-    });
+   offline: false,
+});
     // This launch plays as Alex: it is Alex who is told to sign in again (Notch owning the game
     // doesn't let Alex play), and Notch is still the one `account select` picked.
     let refused = launch_as(&offline(), Some("test-client"), &store, &mut accounts, alex);
@@ -2481,7 +2492,8 @@ fn splitscreen_stops_renewing_other_accounts_once_out_of_time() {
         name: "Cal".into(),
         skin: None,
         cape: None,
-    };
+   offline: false,
+};
     accounts.add(&store, cal, &expired).unwrap();
     accounts.selected = Some(UUID.into());
     let dir = std::env::temp_dir().join(format!("hz-split-late-{}", std::process::id()));
@@ -2554,7 +2566,8 @@ fn a_launch_saving_late_keeps_sign_ins_and_outs_made_meanwhile() {
         name: name.into(),
         skin: None,
         cape: None,
-    };
+   offline: false,
+};
     let mut before = signed_in(&store, &secrets("mc-token", true));
     before.accounts.push(other("gone", "Leaving"));
     before.save_to(&file).unwrap();
@@ -2583,3 +2596,62 @@ fn a_launch_saving_late_keeps_sign_ins_and_outs_made_meanwhile() {
     assert_eq!(names, [std::ffi::OsString::from("accounts.json")]);
     let _ = std::fs::remove_dir_all(&dir);
 }
+
+#[test]
+fn offline_account_creates_valid_deterministic_uuid() {
+    let acc = Account::new_offline("Player123").unwrap();
+    assert_eq!(acc.name, "Player123");
+    assert!(acc.offline);
+    let expected_uuid = format!("{:032x}", horizon_platform::protocol::offline_uuid("Player123"));
+    assert_eq!(acc.uuid, expected_uuid);
+
+    // Invalid names rejected
+    assert!(Account::new_offline("").is_err());
+    assert!(Account::new_offline("ab").is_err()); // too short (<3)
+    assert!(Account::new_offline("a_very_long_player_name_here").is_err()); // too long (>16)
+    assert!(Account::new_offline("has space").is_err());
+    assert!(Account::new_offline("bad*char").is_err());
+}
+
+#[test]
+fn offline_account_passes_owner_gate_without_keychain_or_network() {
+    let store = MemoryStore::default();
+    let mut accounts = Accounts::default();
+    let acc = Account::new_offline("OfflineHero").unwrap();
+    accounts.add_offline(acc.clone());
+
+    // has_owner returns true
+    assert!(accounts.has_owner(&store));
+
+    // launch succeeds without calling network
+    let pass = launch(&offline(), None, &store, &mut accounts).unwrap();
+    assert_eq!(pass.owner.as_ref().unwrap().0.name, "OfflineHero");
+    assert!(pass.offline.is_some());
+    assert!(pass.session.is_none());
+
+    // launch_for_game succeeds too
+    let pass_game = launch_for_game(&offline(), None, &store, &mut accounts).unwrap();
+    assert_eq!(pass_game.owner.unwrap().0.name, "OfflineHero");
+}
+
+#[test]
+fn offline_account_persists_in_accounts_json() {
+    let dir = std::env::temp_dir().join(format!("horizon-offline-acc-{}", std::process::id()));
+    let _ = std::fs::remove_dir_all(&dir);
+    let file = dir.join("accounts.json");
+
+    let mut accounts = Accounts::default();
+    let acc = Account::new_offline("CraftBoy").unwrap();
+    accounts.add_offline(acc);
+    accounts.save_to(&file).unwrap();
+
+    let loaded = Accounts::load_from(&file);
+    assert_eq!(loaded.accounts.len(), 1);
+    let loaded_acc = &loaded.accounts[0];
+    assert_eq!(loaded_acc.name, "CraftBoy");
+    assert!(loaded_acc.offline);
+    assert_eq!(loaded.selected.as_deref(), Some(loaded_acc.uuid.as_str()));
+
+    let _ = std::fs::remove_dir_all(&dir);
+}
+

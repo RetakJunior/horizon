@@ -54,6 +54,7 @@ impl Render for Launcher {
         self.args_focused = self.args_focus.is_focused(window);
         self.proxy_focused = self.proxy_focus.is_focused(window);
         self.settings_query_focused = self.settings_query_focus.is_focused(window);
+        self.offline_name_focused = self.offline_name_focus.is_focused(window);
         let size = window.viewport_size();
         self.window_width = f32::from(size.width);
         self.window_long_side = f32::from(size.width).max(f32::from(size.height));

@@ -6,6 +6,7 @@ impl Launcher {
     /// The chip's two lines: the name that plays, and how.
     pub(super) fn who_plays(&self) -> (String, &'static str) {
         match self.accounts.selected() {
+            Some(a) if a.offline => (a.name.clone(), tr("Offline account")),
             Some(a) => (a.name.clone(), tr("Microsoft account")),
             None => (String::new(), tr("Sign in with Microsoft")),
         }
@@ -26,7 +27,14 @@ impl Launcher {
         self.accounts
             .accounts
             .iter()
-            .map(|a| (a.uuid.clone(), a.name.clone(), tr("Microsoft")))
+            .map(|a| {
+                let how = if a.offline {
+                    tr("Offline")
+                } else {
+                    tr("Microsoft")
+                };
+                (a.uuid.clone(), a.name.clone(), how)
+            })
             .collect()
     }
 

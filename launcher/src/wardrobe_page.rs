@@ -822,6 +822,7 @@ impl Launcher {
             name: "Preview".into(),
             skin: None,
             cape: None,
+            offline: false,
         };
         let mut saved = Saved {
             me: Some(Me {

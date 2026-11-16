@@ -356,6 +356,9 @@ impl Launcher {
     pub(crate) fn load_auth_statuses(&mut self, renew_due: bool) {
         self.auth_checked = Some(Instant::now());
         for account in self.accounts.accounts.clone() {
+            if account.offline {
+                continue;
+            }
             let Some(generation) = self.begin_auth_job(&account.uuid) else {
                 continue;
             };

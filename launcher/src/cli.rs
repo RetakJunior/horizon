@@ -142,6 +142,14 @@ enum AccountCmd {
     },
     /// Play as this account
     Select { who: String },
+    /// Add a local offline (non-premium) account with a player name
+    AddOffline {
+        /// The player name (3 to 16 characters)
+        name: String,
+        /// Select this account to play immediately
+        #[arg(long)]
+        select: bool,
+    },
 }
 
 #[derive(Subcommand)]
@@ -1974,13 +1982,17 @@ fn account_command(action: AccountCmd, as_json: bool) -> Result<(), String> {
                     } else {
                         " "
                     };
-                    let status = account::session::status(account::store(), &a.uuid);
-                    // Why it couldn't be checked (a keyring that didn't answer, #12179).
-                    let why = match status.state {
-                        account::session::State::Retry => format!(": {}", status.message),
-                        _ => String::new(),
-                    };
-                    println!("{mark} {}  {}  {}{why}", a.name, a.uuid, status.label());
+                    if a.offline {
+                        println!("{mark} {}  {}  Offline", a.name, a.uuid);
+                    } else {
+                        let status = account::session::status(account::store(), &a.uuid);
+                        // Why it couldn't be checked (a keyring that didn't answer, #12179).
+                        let why = match status.state {
+                            account::session::State::Retry => format!(": {}", status.message),
+                            _ => String::new(),
+                        };
+                        println!("{mark} {}  {}  {}{why}", a.name, a.uuid, status.label());
+                    }
                 }
                 if !accounts.has_owner(account::store()) {
                     println!(
@@ -2069,6 +2081,23 @@ fn account_command(action: AccountCmd, as_json: bool) -> Result<(), String> {
             accounts.play_as(&a.uuid)?;
             accounts.save()?;
             println!("The game plays as {}.", a.name);
+        }
+        AccountCmd::AddOffline { name, select } => {
+            let account = account::Account::new_offline(&name)?;
+            let uuid = account.uuid.clone();
+            let name = account.name.clone();
+            accounts.add_offline(account);
+            if select || accounts.selected.is_none() {
+                accounts.selected = Some(uuid.clone());
+            }
+            accounts.save()?;
+            if as_json {
+                json(serde_json::json!({
+                    "added": { "name": name, "uuid": uuid, "offline": true }
+                }));
+            } else {
+                println!("Added offline account {name} ({uuid}).");
+            }
         }
     }
     Ok(())

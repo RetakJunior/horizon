@@ -463,6 +463,9 @@ struct Launcher {
     friend_code: line_edit::LineEdit,
     friend_focused: bool,
     friend_focus: FocusHandle,
+    offline_name_input: line_edit::LineEdit,
+    offline_name_focused: bool,
+    offline_name_focus: FocusHandle,
     /// The window's width at the last frame: Home's head lays out by it, as the mockup's `xl`.
     window_width: f32,
     /// The window's longer side in points, and the screen's pixels per point: the size pictures
@@ -829,6 +832,7 @@ mod tests {
             name: "TestAccount".into(),
             skin: None,
             cape: None,
+            offline: false,
         }));
         assert!(sign_in_change(&mut shown, SignInState::Starting).is_some());
         assert!(sign_in_change(&mut shown, SignInState::Starting).is_none());

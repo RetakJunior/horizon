@@ -478,6 +478,32 @@ pub struct Account {
     pub skin: Option<(String, String)>,
     #[serde(default)]
     pub cape: Option<String>,
+    /// Whether this is a local / offline (non-premium) account.
+    #[serde(default)]
+    pub offline: bool,
+}
+
+/// A player name Minecraft accepts: 3 to 16 letters, digits or underscores.
+pub fn valid_player_name(name: &str) -> bool {
+    (3..=16).contains(&name.len()) && name.chars().all(|c| c.is_ascii_alphanumeric() || c == '_')
+}
+
+impl Account {
+    /// Create a local offline (non-premium) profile with a deterministic offline UUID.
+    pub fn new_offline(name: &str) -> Result<Self, String> {
+        let name = name.trim();
+        if !valid_player_name(name) {
+            return Err(crate::i18n::tr("A Minecraft name has 3 to 16 letters, digits or underscores.").into());
+        }
+        let uuid = format!("{:032x}", horizon_platform::protocol::offline_uuid(name));
+        Ok(Self {
+            uuid,
+            name: name.to_string(),
+            skin: None,
+            cape: None,
+            offline: true,
+        })
+    }
 }
 
 /// The profile; none when the account has none (it doesn't own the game, or never made one).
@@ -517,6 +543,7 @@ fn profile(ep: &Endpoints, token: &str) -> Result<Option<Account>, String> {
             ))
         }),
         cape: active("capes").and_then(|c| str_field(&c, "url")),
+        offline: false,
     }))
 }
 
@@ -573,6 +600,17 @@ impl Secrets {
             minecraft_token: mc.token,
             minecraft_expires_at: mc.expires_at,
             xuid: mc.xuid,
+            owns: true,
+        }
+    }
+
+    pub fn offline() -> Self {
+        Self {
+            refresh_token: String::new(),
+            sign_in_required: false,
+            minecraft_token: "offline".into(),
+            minecraft_expires_at: u64::MAX,
+            xuid: None,
             owns: true,
         }
     }
@@ -1847,6 +1885,17 @@ impl Accounts {
         self.keep_sign_in(store, account, secrets)
     }
 
+    /// Add or update a local offline account without keychain secrets, and select it.
+    pub fn add_offline(&mut self, account: Account) {
+        if self.selected.is_none() {
+            self.selected = Some(account.uuid.clone());
+        }
+        match self.accounts.iter_mut().find(|a| a.uuid == account.uuid) {
+            Some(a) => *a = account,
+            None => self.accounts.push(account),
+        }
+    }
+
     fn keep_sign_in(
         &mut self,
         store: &dyn SecretStore,
@@ -1867,12 +1916,11 @@ impl Accounts {
     /// Whether an account here owned the game at its last check (the keychain's answer, no
     /// request): what Play needs.
     pub fn has_owner(&self, store: &dyn SecretStore) -> bool {
-        // The selected account first: it owning the game ends the search after one account's
-        // item — every account's item read can ask for the keychain (macOS, #4912).
+        // An offline account or an account that owns the game satisfies Play.
         self.selected()
             .into_iter()
             .chain(self.accounts.iter().filter(|a| Some(*a) != self.selected()))
-            .any(|a| secrets_in(store, &a.uuid).is_some_and(|s| s.owns))
+            .any(|a| a.offline || secrets_in(store, &a.uuid).is_some_and(|s| s.owns))
     }
 
     /// Plays as the signed-in account `uuid`.
@@ -1894,10 +1942,10 @@ impl Accounts {
     /// Sign out: the secrets leave the keychain, the account the list.
     pub fn remove(&mut self, store: &dyn SecretStore, uuid: &str) -> Result<(), String> {
         let _operation = session::lock(store)?;
-        store.delete(uuid)?;
+        let _ = store.delete(uuid);
         self.accounts.retain(|a| a.uuid != uuid);
         if self.selected.as_deref() == Some(uuid) {
-            self.selected = None;
+            self.selected = self.accounts.first().map(|a| a.uuid.clone());
         }
         Ok(())
     }
@@ -1981,6 +2029,14 @@ pub fn launch(
             break;
         }
         let plays = Some(&account.uuid) == selected.as_ref();
+        if account.offline {
+            owned = true;
+            if plays {
+                pass.offline = Some(crate::i18n::tr("Offline account").into());
+            }
+            pass.owner = Some((account.clone(), Secrets::offline()));
+            continue;
+        }
         let operation = session::lock(store);
         let read = match store.get(&account.uuid) {
             Ok(text) => text.and_then(|s| serde_json::from_str::<Secrets>(&s).ok()),
@@ -2071,8 +2127,7 @@ pub fn launch_for_game(
     let pass = launch(ep, client_id, store, accounts)?;
     let owns = accounts
         .selected()
-        .and_then(|a| secrets_in(store, &a.uuid))
-        .is_some_and(|s| s.owns);
+        .is_some_and(|a| a.offline || secrets_in(store, &a.uuid).is_some_and(|s| s.owns));
     if owns {
         Ok(pass)
     } else {
@@ -2313,6 +2368,8 @@ pub struct GameSession {
     pub offline: Option<String>,
     /// The other accounts' sessions, for splitscreen players (`account_sessions`).
     pub env: Vec<(&'static str, String)>,
+    /// Player name when playing as an offline account (--name).
+    pub player_name: Option<String>,
 }
 
 /// The owner gate for the game about to start, then the selected account's session in a file
@@ -2333,7 +2390,11 @@ pub fn session_for_game(game_home: &Path) -> Result<GameSession, NoOwner> {
     if let Err(e) = accounts.save_renewed() {
         eprintln!("Horizon: the accounts are not saved: {e}");
     }
-    Ok(session_file(game_home, pass, env))
+    let mut session = session_file(game_home, pass, env);
+    if let Some(account) = accounts.selected().filter(|a| a.offline) {
+        session.player_name = Some(account.name.clone());
+    }
+    Ok(session)
 }
 
 /// [`session_for_game`] for one launch as `who` (`play --account`, a signed-in account): who
@@ -2361,7 +2422,11 @@ pub fn session_for_game_as(game_home: &Path, who: &str) -> Result<GameSession, S
     if let Err(e) = accounts.save_renewed() {
         eprintln!("Horizon: the accounts are not saved: {e}");
     }
-    Ok(session_file(game_home, pass, env))
+    let mut session = session_file(game_home, pass, env);
+    if let Some(account) = accounts.find(who).filter(|a| a.offline) {
+        session.player_name = Some(account.name.clone());
+    }
+    Ok(session)
 }
 
 /// The owner gate as `who`, on `accounts`, which keeps its choice of player.
@@ -2561,6 +2626,14 @@ fn java_player_with(
     store: &dyn SecretStore,
     accounts: &mut Accounts,
 ) -> Result<crate::java_launch::Player, String> {
+    if let Some(account) = accounts.selected().filter(|a| a.offline) {
+        return Ok(crate::java_launch::Player {
+            name: account.name.clone(),
+            uuid: account.uuid.clone(),
+            token: "0".into(),
+            xuid: String::new(),
+        });
+    }
     let pass = launch(ep, client_id, store, accounts).map_err(|e| e.to_string())?;
     let kept = || {
         let order = accounts.selected().into_iter().chain(&accounts.accounts);

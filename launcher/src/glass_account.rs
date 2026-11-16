@@ -11,12 +11,22 @@ use horizon_theme::glass::{ink, radius};
 impl Launcher {
     pub(super) fn glass_account(&mut self, cx: &mut Context<Self>) -> Div {
         let wide = self.window_width >= crate::glass_home::WIDE;
-        // Signed out, "who plays" would only repeat the Microsoft card's call to sign in.
+        // Signed out, "who plays" would only repeat the account cards.
         if self.accounts.selected().is_none() {
-            return div().child(self.glass_microsoft_card(cx).w_full());
+            return div()
+                .flex()
+                .flex_col()
+                .gap(px(16.))
+                .child(self.glass_microsoft_card(cx).w_full())
+                .child(self.glass_offline_card(cx).w_full());
         }
         let left = self.glass_who_plays();
-        let right = self.glass_microsoft_card(cx);
+        let right = div()
+            .flex()
+            .flex_col()
+            .gap(px(16.))
+            .child(self.glass_microsoft_card(cx))
+            .child(self.glass_offline_card(cx));
         if wide {
             div()
                 .flex()
@@ -38,6 +48,11 @@ impl Launcher {
     fn glass_who_plays(&self) -> Div {
         let t = self.theme;
         let (uuid, name, status) = match self.accounts.selected() {
+            Some(a) if a.offline => (
+                Some(a.uuid.clone()),
+                a.name.clone(),
+                (Tone::Live, tr("Offline account · single-player & LAN / offline servers")),
+            ),
             Some(a) => (
                 Some(a.uuid.clone()),
                 a.name.clone(),
@@ -201,5 +216,118 @@ impl Launcher {
                         )),
                 )
             })
+    }
+
+    /// Adding a local offline account without a Microsoft account.
+    fn glass_offline_card(&mut self, cx: &mut Context<Self>) -> Div {
+        let t = self.theme;
+        let focused = self.offline_name_focused;
+        let name = self.offline_name_input.text().trim().to_string();
+        let valid = account::valid_player_name(&name);
+
+        let field = div()
+            .id("offline-name-input")
+            .track_focus(&self.offline_name_focus)
+            .relative()
+            .flex_1()
+            .h(px(40.))
+            .px(px(12.))
+            .rounded(px(radius::CONTROL))
+            .bg(white(0.06))
+            .border_1()
+            .border_color(if focused {
+                white(0.4)
+            } else {
+                white(ui::edge::REST)
+            })
+            .flex()
+            .items_center()
+            .child(line_edit::content(
+                &self.offline_name_input,
+                &t,
+                focused,
+                false,
+                false,
+                "Enter player name",
+            ))
+            .on_click(cx.listener(|this, _: &ClickEvent, window, cx| {
+                window.focus(&this.offline_name_focus, cx);
+                cx.notify();
+            }))
+            .on_key_down(cx.listener(|this, ev: &KeyDownEvent, window, cx| {
+                match line_edit::handle(&mut this.offline_name_input, ev, cx) {
+                    line_edit::Key::Pass => return,
+                    line_edit::Key::Enter => {
+                        this.add_offline_account();
+                        window.blur(cx);
+                    }
+                    line_edit::Key::Escape => window.blur(cx),
+                    _ => {}
+                }
+                cx.stop_propagation();
+                cx.notify();
+            }));
+        let field = line_edit::mouse(field, cx, |this| &mut this.offline_name_input);
+
+        let add_button = ui::quiet("add-offline-account", tr("Add"), 40., &t);
+        let add_button = if valid {
+            add_button.on_click(cx.listener(|this, _: &ClickEvent, _, cx| {
+                this.add_offline_account();
+                cx.notify();
+            }))
+        } else {
+            add_button.opacity(0.4).cursor_default()
+        };
+
+        div()
+            .flex()
+            .flex_col()
+            .rounded(px(16.))
+            .bg(white(0.045))
+            .border_1()
+            .border_color(white(ui::edge::REST))
+            .p(px(24.))
+            .child(
+                div()
+                    .font_family(horizon_theme::glass::DISPLAY_FONT)
+                    .font_weight(FontWeight::SEMIBOLD)
+                    .text_size(px(20.))
+                    .line_height(px(25.))
+                    .text_color(white(ink::FULL))
+                    .child(tr("Add offline account")),
+            )
+            .child(
+                ui::text(14., FontWeight::NORMAL, 0.65)
+                    .mt(px(8.))
+                    .line_height(px(21.))
+                    .child(tr(
+                        "Play single-player and join offline/LAN servers without a Microsoft account.",
+                    )),
+            )
+            .child(
+                div()
+                    .flex()
+                    .items_center()
+                    .gap(px(8.))
+                    .mt(px(16.))
+                    .child(field)
+                    .child(add_button),
+            )
+    }
+
+    pub(crate) fn add_offline_account(&mut self) {
+        let name = self.offline_name_input.text().trim().to_string();
+        if let Ok(account) = account::Account::new_offline(&name) {
+            let mut accounts = account::Accounts::load();
+            let uuid = account.uuid.clone();
+            accounts.add_offline(account);
+            accounts.selected = Some(uuid);
+            if accounts.save().is_ok() {
+                self.accounts = accounts;
+                self.owner = Some(true);
+                self.load_profile_heads();
+            }
+            self.offline_name_input.set(String::new());
+        }
     }
 }

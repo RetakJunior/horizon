@@ -216,6 +216,13 @@ fn status_within(
     progress: &dyn Fn(Phase),
     within: Option<Duration>,
 ) -> Status {
+    if Accounts::load().find(uuid).is_some_and(|a| a.offline) {
+        return Status {
+            state: State::Ready,
+            expires_at: None,
+            message: crate::i18n::tr("Offline account").into(),
+        };
+    }
     let result = (|| {
         progress(Phase::Queued);
         let _operation = lock_within(store, within)?;
@@ -237,6 +244,13 @@ pub fn refresh_with_progress(who: &str, progress: &dyn Fn(Phase)) -> Result<Stat
         .find(who)
         .cloned()
         .ok_or("That account isn't signed in.")?;
+    if account.offline {
+        return Ok(Status {
+            state: State::Ready,
+            expires_at: None,
+            message: crate::i18n::tr("Offline account does not need refresh").into(),
+        });
+    }
     Ok(refresh_account(
         &Endpoints::live(),
         client_id().as_deref(),
