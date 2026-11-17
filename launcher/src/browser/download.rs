@@ -50,7 +50,7 @@ pub(super) fn agent(url: &str) -> ureq::Agent {
     horizon_port_pack::net::keep("browser", spec.as_deref(), |proxy| {
         let builder = ureq::AgentBuilder::new()
             .user_agent(&format!(
-                "{} horizon-launcher/{} (github.com/{})",
+                "{} rea-launcher/{} (github.com/{})",
                 crate::backend::REPO,
                 crate::backend::VERSION,
                 crate::backend::REPO

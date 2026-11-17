@@ -488,23 +488,23 @@ jobs:
           cargo build --release --locked --target aarch64-pc-windows-msvc
       - name: Check the launcher's PE machine
         working-directory: launcher
-        run: python ../tools/check_pe_arch.py arm64 target/aarch64-pc-windows-msvc/release/horizon-launcher.exe
+        run: python ../tools/check_pe_arch.py arm64 target/aarch64-pc-windows-msvc/release/rea-launcher.exe
       - name: Check launcher DLL imports and command-line startup
         working-directory: launcher
         # bash, as launcher.yml's check on the same runner: the launcher is a GUI-subsystem program, and a pwsh
         # `$output = & launcher --version` read no output from it (run 42217014588).
         shell: bash
         run: |
-          launcher=target/aarch64-pc-windows-msvc/release/horizon-launcher.exe
+          launcher=target/aarch64-pc-windows-msvc/release/rea-launcher.exe
           python ../tools/check_imports.py "$launcher"
           out=$("$launcher" --version)
           echo "$out"
-          [[ "$out" == "horizon-launcher "* ]] || { echo "::error::horizon-launcher --version printed '$out'"; exit 1; }
+          [[ "$out" == "rea-launcher "* ]] || { echo "::error::rea-launcher --version printed '$out'"; exit 1; }
       - name: Build a native-mod game with the launcher's managed toolchain
         working-directory: launcher
         shell: pwsh
         env:
-          HORIZON_LAUNCHER_HOME: ${{ runner.temp }}\horizon-native-arm64-toolchain
+          REA_LAUNCHER_HOME: ${{ runner.temp }}\horizon-native-arm64-toolchain
           HORIZON_NATIVE_TARGET_DIR: ${{ runner.temp }}\horizon-native-arm64-toolchain\target
         run: |
           $ErrorActionPreference = 'Stop'

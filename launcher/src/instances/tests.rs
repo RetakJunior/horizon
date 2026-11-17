@@ -3,7 +3,7 @@ use std::collections::BTreeMap;
 
 fn scratch(name: &str) -> PathBuf {
     let root = std::env::temp_dir().join(format!(
-        "horizon-launcher-instances-{name}-{}",
+        "rea-launcher-instances-{name}-{}",
         std::process::id()
     ));
     let _ = fs::remove_dir_all(&root);

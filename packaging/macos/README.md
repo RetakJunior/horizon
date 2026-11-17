@@ -1,18 +1,17 @@
-# The macOS launcher: Horizon.app in a .dmg
+# The macOS launcher: REa Launcher.app in a .dmg
 
 `package.sh BINARY VERSION OUTDIR` (run by `.github/workflows/launcher.yml` on macOS) makes:
 
-- `Horizon.app`: `Contents/MacOS/horizon-launcher`, `Contents/Info.plist` (this folder's, bundle
-  id `dev.horizon.launcher`, macOS 11 or later), `Contents/Resources/horizon.icns`
+- `REa Launcher.app`: `Contents/MacOS/rea-launcher`, `Contents/Info.plist` (this folder's, bundle
+  id `dev.rea.launcher`, macOS 12 or later), `Contents/Resources/rea-launcher.icns`
   (`packaging/icons`, from `cargo run -p xtask -- icons`).
-- `horizon-launcher-macos-arm64.dmg`: the installer. Opening it shows the app and a link to
+- `rea-launcher-macos-arm64.dmg`: the installer. Opening it shows the app and a link to
   Applications over `background.png` / `background@2x.png` (drawn from `background.html`); the
   player drags one onto the other. Built by [dmgbuild](https://github.com/dmgbuild/dmgbuild),
   which writes the Finder layout without a GUI session.
-- `horizon-launcher-macos-arm64.zip`: the same app, zipped with `ditto`. The launcher updates
-  itself from this: inside Horizon.app it replaces the whole bundle (copied beside it, then
-  swapped in by renaming, then restarted); a bare `horizon-launcher` binary, as launchers before
-  the app shipped, finds the binary inside the zip and replaces only itself.
+- `rea-launcher-macos-arm64.zip`: the same app, zipped with `ditto`, for manual installation.
+  REa Launcher does not self-update; get tagged builds from GitHub Releases or upstream-synced
+  builds from Actions artifacts.
 
 ## Signing and notarization
 
@@ -20,17 +19,15 @@ Releases are signed with Ludovic's **Developer ID** ("Developer ID Application: 
 (YYJU63HSD4)"), with the hardened runtime and a secure timestamp, then **notarized** by Apple and
 **stapled**, so Gatekeeper opens them on any Mac without a warning, offline too:
 
-- the launcher (`package.sh`): Horizon.app is signed, notarized and stapled first, so the zip the
-  launcher updates itself from and the .dmg both hold it stapled; then the .dmg is signed,
-  notarized and stapled. The script ends with what Gatekeeper says of each, which must read
-  `accepted` and `source=Notarized Developer ID`.
+- the launcher (`package.sh`): REa Launcher.app is signed, notarized and stapled first, so the .dmg
+  holds it stapled; then the .dmg is signed, notarized and stapled. The script ends with what
+  Gatekeeper says of each, which must read `accepted` and `source=Notarized Developer ID`.
 - the game (`.github/workflows/release.yml`): `horizon-client`, `horizon-ctl` and
   `horizon-prepare` are signed right after they are built (so the checks and the 1500-frame smoke
   run use them as players will), and the zip is notarized. Programs outside a bundle can't hold a
   ticket: Gatekeeper asks Apple online the first time each one runs.
 
-No entitlements are needed. The launcher checks an update's signature before swapping the new
-Horizon.app in, and again where it lands; when it doesn't hold, the old app is put back.
+No entitlements are needed. REa Launcher does not check for or install launcher updates itself.
 
 The switch is the repository variable `MACOS_SIGN_IDENTITY`: set to the identity's name, the
 builds sign and notarize; empty (as in forks), they are signed **ad hoc** as before.
@@ -72,7 +69,7 @@ Signing by hand, as the workflow does:
 export MACOS_SIGN_IDENTITY="Developer ID Application: Ludovic Marie (YYJU63HSD4)"
 export MACOS_SIGN_KEYCHAIN=~/Library/Keychains/horizon-signing.keychain-db MACOS_NOTARY_PROFILE=horizon-notary
 packaging/macos/keychain.sh unlock
-packaging/macos/package.sh target/release/horizon-launcher 0.0.0 out
+packaging/macos/package.sh target/release/rea-launcher 0.0.0 out
 packaging/macos/keychain.sh lock
 ```
 

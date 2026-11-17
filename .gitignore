@@ -43,3 +43,8 @@
 
 # Visual Studio editor state.
 .vs/
+
+# Local runner files
+Horizon.desktop
+local_lib/
+start-horizon.sh

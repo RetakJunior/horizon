@@ -1642,7 +1642,7 @@ mod tests {
     #[test]
     #[ignore = "downloads the managed Windows ARM64 toolchain and builds Horizon"]
     fn managed_arm64_toolchain_builds_the_game() {
-        let home = std::env::var_os("HORIZON_LAUNCHER_HOME").map_or_else(
+        let home = std::env::var_os("REA_LAUNCHER_HOME").map_or_else(
             || {
                 std::env::temp_dir().join(format!(
                     "horizon-managed-native-arm64-{}",
@@ -1652,7 +1652,7 @@ mod tests {
             PathBuf::from,
         );
         let _ = fs::create_dir_all(&home);
-        std::env::set_var("HORIZON_LAUNCHER_HOME", &home);
+        std::env::set_var("REA_LAUNCHER_HOME", &home);
         let target_dir = std::env::var_os("HORIZON_NATIVE_TARGET_DIR").map_or_else(
             || backend::build_dir().join("managed-native-target"),
             PathBuf::from,

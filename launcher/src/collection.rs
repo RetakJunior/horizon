@@ -11,7 +11,6 @@ pub(crate) struct Collection {
     json_scroll: Scrollbar,
     /// The welcome's list, and whether its ping row shows what is sent.
     pub welcome_scroll: Scrollbar,
-    pub welcome_detail: bool,
     /// The question's switches, until the player answers.
     pub draft: Choices,
     /// "View what would be sent": a line on what it is, and the JSON.
@@ -30,7 +29,6 @@ impl Collection {
             body_scroll: Scrollbar::default(),
             json_scroll: Scrollbar::default(),
             welcome_scroll: Scrollbar::default(),
-            welcome_detail: false,
             draft: Choices::NONE,
             view: None,
             note: None,
@@ -136,7 +134,7 @@ impl Launcher {
     /// Whether the question covers the window: not answered for this consent version, and the
     /// opening is over.
     pub(crate) fn asking_consent(&self) -> bool {
-        self.opening.is_none() && self.collection.consent.needs_asking()
+        false
     }
 
     fn answer_consent(&mut self, choices: Choices) {
@@ -243,7 +241,7 @@ impl Launcher {
                     .child(tr("Help make Horizon faster and steadier?")),
             )
             .child(text(theme::UI).text_color(t.muted).child(trf(
-                "Horizon can send a few things to its developers. {opening} Settings can change any of it at any time.",
+                "REa Launcher keeps telemetry and gameplay pings disabled. {opening}",
                 &[("opening", tr(telemetry::OPENING))],
             )))
             .child(
@@ -254,7 +252,11 @@ impl Launcher {
                     .border_color(t.rule)
                     .children(rows),
             )
-            .child(text(theme::CAPTION).text_color(t.muted).child(tr(telemetry::NEVER)))
+            .child(
+                text(theme::CAPTION)
+                    .text_color(t.muted)
+                    .child(tr(telemetry::NEVER)),
+            )
             .child(
                 div()
                     .id("ask-view")
@@ -262,13 +264,22 @@ impl Launcher {
                     .text_color(t.accent)
                     .cursor_pointer()
                     .hover(|s| s.opacity(0.8))
-                    .child(tr(if viewing { "Hide what would be sent" } else { "View what would be sent" }))
+                    .child(tr(if viewing {
+                        "Hide what would be sent"
+                    } else {
+                        "View what would be sent"
+                    }))
                     .on_click(cx.listener(|this, _: &ClickEvent, _, cx| {
                         this.toggle_view();
                         cx.notify();
                     })),
             )
-            .children(self.collection.view.as_ref().map(|v| json_view(v, &t, &self.collection.json_scroll)));
+            .children(
+                self.collection
+                    .view
+                    .as_ref()
+                    .map(|v| json_view(v, &t, &self.collection.json_scroll)),
+            );
         let answers = div()
             .flex()
             .flex_none()
@@ -372,14 +383,10 @@ impl Launcher {
                 &[("prefix", &id[..4]), ("suffix", &id[id.len() - 4..])],
             ),
         };
-        let server = if horizon_telemetry::endpoint().is_some() {
-            trf(
-                "{count} waiting to be sent",
-                &[("count", &waiting.to_string())],
-            )
-        } else {
-            tr("Sending is turned off here (HORIZON_TELEMETRY_URL=off)").into()
-        };
+        let server = trf(
+            "{count} stored locally; telemetry sending is disabled",
+            &[("count", &waiting.to_string())],
+        );
         let confirm = self.collection.confirm_delete;
         let actions = div()
             .flex()
@@ -456,7 +463,7 @@ impl Launcher {
                     .max_w(px(600.))
                     .text_color(t.muted)
                     .child(trf(
-                        "{opening} What each one sends is below it; the privacy page on playhorizon.dev says how long it is kept.",
+                        "{opening} The switches below only change saved preferences; this launcher build does not send telemetry.",
                         &[("opening", tr(telemetry::OPENING))],
                     )),
             )

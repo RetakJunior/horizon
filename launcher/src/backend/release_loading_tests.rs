@@ -37,20 +37,16 @@ fn baseline(load: impl Fn() -> Result<serde_json::Value, String>) -> (Vec<Releas
             &parse_releases(&list, ASSET, is_game_tag),
             &installed_fixture(),
         ),
-        launcher: launcher_update(&parse_releases(&list, LAUNCHER_ASSET, is_launcher_tag)),
+        launcher: None,
     };
     (releases, updates)
 }
 
 fn shared(load: impl FnOnce() -> Result<serde_json::Value, String>) -> (Vec<Release>, Updates) {
     let mut releases = None;
-    let updates = releases_and_updates_with(
-        load,
-        installed_fixture,
-        |list| parse_releases(list, LAUNCHER_ASSET, is_launcher_tag),
-        |r| releases = Some(r.unwrap()),
-    )
-    .unwrap();
+    let updates =
+        releases_and_updates_with(load, installed_fixture, |r| releases = Some(r.unwrap()))
+            .unwrap();
     (releases.unwrap(), updates)
 }
 
@@ -83,7 +79,6 @@ fn errors_reach_releases_and_updates_without_fallback() {
         let result = releases_and_updates_with(
             || Err(error.into()),
             || panic!("no installed scan after failure"),
-            |_| panic!("no fallback after failure"),
             |r| published = Some(r),
         );
         assert_eq!(published.unwrap().unwrap_err(), error);
@@ -92,41 +87,23 @@ fn errors_reach_releases_and_updates_without_fallback() {
 }
 
 #[test]
-fn publish_games_before_older_launcher_fallback() {
+fn publishes_game_releases_without_checking_launcher_updates() {
     let events = RefCell::new(Vec::new());
     let result = releases_and_updates_with(
         || Ok(serde_json::json!([{"tag_name": "v2026.10.14", "assets": []}])),
         Vec::new,
-        |list| {
-            launcher_releases_in_with(list, |url| {
-                assert_eq!(events.borrow().first(), Some(&"releases"));
-                events.borrow_mut().push("fallback");
-                if url.contains("matching-refs") {
-                    Ok(Some(
-                        serde_json::json!([{"ref": "refs/tags/launcher@99.0.0"}]),
-                    ))
-                } else {
-                    Ok(Some(
-                        serde_json::json!({"tag_name": "launcher@99.0.0", "assets": [{
-                            "name": LAUNCHER_ASSET.unwrap_or("unsupported"),
-                            "browser_download_url": "u", "size": 1
-                        }]}),
-                    ))
-                }
-            })
-        },
         |r| {
             assert_eq!(r.unwrap()[0].tag, "v2026.10.14");
             events.borrow_mut().push("releases");
         },
     )
     .unwrap();
-    assert_eq!(*events.borrow(), ["releases", "fallback", "fallback"]);
-    assert_eq!(result.launcher.is_some(), LAUNCHER_ASSET.is_some());
+    assert_eq!(*events.borrow(), ["releases"]);
+    assert!(result.launcher.is_none());
 }
 
 #[test]
-fn failed_launcher_fallback_keeps_game_result_and_checks_stay_fresh() {
+fn game_release_checks_stay_fresh_without_launcher_lookups() {
     let requests = AtomicUsize::new(0);
     for day in [14, 15] {
         let mut published = None;
@@ -136,7 +113,6 @@ fn failed_launcher_fallback_keeps_game_result_and_checks_stay_fresh() {
                 Ok(serde_json::json!([{"tag_name": format!("v2026.10.{day}")}]))
             },
             Vec::new,
-            |list| launcher_releases_in_with(list, |_| Err("offline".into())),
             |r| published = Some(r.unwrap()),
         )
         .unwrap();
@@ -157,26 +133,16 @@ fn empty_or_prebuilt_only_fork_has_no_game_or_launcher_update() {
                         "browser_download_url": "https://example.test/sdk", "size": 9}]
         }]),
     ] {
-        for missing in [None, Some(serde_json::json!([]))] {
-            let mut games = None;
-            let updates = releases_and_updates_with(
-                || Ok(list.clone()),
-                Vec::new,
-                |list| {
-                    launcher_releases_in_with(list, |url| {
-                        assert!(
-                            url.starts_with("https://api.github.com/repos/horizon-rust/horizon/")
-                        );
-                        Ok(missing.clone())
-                    })
-                },
-                |result| games = Some(result.unwrap()),
-            )
-            .unwrap();
-            assert!(games.unwrap().is_empty());
-            assert!(updates.horizon.is_none());
-            assert!(updates.launcher.is_none());
-        }
+        let mut games = None;
+        let updates = releases_and_updates_with(
+            || Ok(list.clone()),
+            Vec::new,
+            |result| games = Some(result.unwrap()),
+        )
+        .unwrap();
+        assert!(games.unwrap().is_empty());
+        assert!(updates.horizon.is_none());
+        assert!(updates.launcher.is_none());
     }
 }
 
@@ -187,19 +153,19 @@ fn each_platform_download_is_bound_to_the_fork_not_the_provider_url() {
             "linux",
             "x86_64",
             "horizon-linux-x86_64.tar.gz",
-            "horizon-launcher-linux-x86_64.tar.gz",
+            "rea-launcher-linux-x86_64.tar.gz",
         ),
         (
             "windows",
             "x86_64",
             "horizon-windows-x64.zip",
-            "horizon-launcher-windows-x64.zip",
+            "rea-launcher-windows-x64.zip",
         ),
         (
             "macos",
             "aarch64",
             "horizon-macos-arm64.zip",
-            "horizon-launcher-macos-arm64.zip",
+            "rea-launcher-macos-arm64.zip",
         ),
     ];
     let assets: Vec<_> = platforms.iter().flat_map(|(_, _, game, launcher)| [game, launcher])

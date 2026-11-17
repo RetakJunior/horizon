@@ -94,8 +94,8 @@ fn killed_holder_releases_production_home_source_and_parent_leases() {
                 "--nocapture",
             ])
             .env("HORIZON_LEASE_ACTOR_ROOT", root.path())
-            .env("HORIZON_LAUNCHER_HOME", &data)
-            .env("HORIZON_HOME", &home)
+            .env("REA_LAUNCHER_HOME", &data)
+            .env("REA_HOME", &home)
             .env("XDG_DATA_HOME", root.path().join("xdg-data"))
             .env("XDG_CONFIG_HOME", root.path().join("xdg-config"))
             .env("HORIZON_LAUNCHER_TRASH", root.path().join("trash"))
@@ -146,7 +146,7 @@ fn lease_holder_actor() {
     let mut command = Command::new(std::env::current_exe().unwrap());
     command
         .current_dir(root.join("game"))
-        .env("HORIZON_HOME", root.join("home"))
+        .env("REA_HOME", root.join("home"))
         .arg("--resources")
         .arg(root.join("base/resources"));
     mark(&mut command, &root.join("versions/native-fixture"));
@@ -194,8 +194,8 @@ fn routed_lifetime(stop: bool) {
             .env("ROUTING_STOP", if stop { "1" } else { "0" })
             // Keep actor failures visible in CI rather than only timing out on its marker.
             .env("RUST_BACKTRACE", "1")
-            .env("HORIZON_LAUNCHER_HOME", &data)
-            .env("HORIZON_HOME", &home)
+            .env("REA_LAUNCHER_HOME", &data)
+            .env("REA_HOME", &home)
             .env("XDG_DATA_HOME", data.join("xdg-data"))
             .env("XDG_CONFIG_HOME", data.join("xdg-config"))
             .env("HORIZON_LAUNCHER_TRASH", data.join("trash"))
@@ -341,7 +341,7 @@ fn data_directory_leaf_never_leases_ancestors_outside_data() {
         // Registry entry consumes an authoritative path; shared() resolves the same root.
         let data = data.canonicalize().unwrap();
         let mut command = Command::new(std::env::current_exe().unwrap());
-        command.current_dir(&data).env("HORIZON_HOME", &data);
+        command.current_dir(&data).env("REA_HOME", &data);
         let _claims = shared(&command).unwrap();
         let registry =
             horizon_platform::mod_package::runtime_leases::Registry::existing(&data).unwrap();
@@ -358,7 +358,7 @@ fn data_directory_leaf_never_leases_ancestors_outside_data() {
             "run_leases::tests::data_directory_leaf_never_leases_ancestors_outside_data"
         ])
         .env(ENV, root.path())
-        .env("HORIZON_LAUNCHER_HOME", root.path().join("data"))
+        .env("REA_LAUNCHER_HOME", root.path().join("data"))
         .env("HORIZON_LAUNCHER_NO_SELF_UPDATE", "1")
         .env("HORIZON_NO_AUDIO", "1")
         .status()

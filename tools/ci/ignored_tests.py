@@ -717,7 +717,7 @@ def run(package, skip, number=None, count=None, only=None):
     # Resource-backed fixtures need a fresh home, not the runner user's game files.
     with tempfile.TemporaryDirectory(prefix="horizon-ignored-") as scratch:
         homes = {}
-        for key in ("HORIZON_HOME", "HORIZON_LAUNCHER_HOME", "XDG_DATA_HOME", "XDG_CONFIG_HOME"):
+        for key in ("HORIZON_HOME", "HORIZON_LAUNCHER_HOME", "REA_LAUNCHER_HOME", "XDG_DATA_HOME", "XDG_CONFIG_HOME"):
             home = Path(scratch) / key.lower()
             home.mkdir()
             homes[key] = home

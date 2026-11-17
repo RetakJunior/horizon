@@ -114,8 +114,14 @@ def game_env(base=None, **extra):
     # Local fixtures use real TCP, but need no inbound access from other machines.
     # Network/discovery suites can explicitly set HORIZON_TEST_LOOPBACK=0.
     env.setdefault("HORIZON_TEST_LOOPBACK", "1")
-    for key, prefix in (("HORIZON_HOME", "horizon-home-"), ("HORIZON_LAUNCHER_HOME", "horizon-launcher-home-"),
-                        ("XDG_DATA_HOME", "horizon-xdg-data-"), ("XDG_CONFIG_HOME", "horizon-xdg-config-")):
+    for rea_key, horizon_key, prefix in (
+        ("REA_HOME", "HORIZON_HOME", "rea-home-"),
+        ("REA_LAUNCHER_HOME", "HORIZON_LAUNCHER_HOME", "rea-launcher-home-"),
+    ):
+        home = env.get(rea_key) or env.get(horizon_key) or _scratch_dir(prefix)
+        env[rea_key] = home
+        env[horizon_key] = home
+    for key, prefix in (("XDG_DATA_HOME", "rea-xdg-data-"), ("XDG_CONFIG_HOME", "rea-xdg-config-")):
         if not env.get(key):
             env[key] = _scratch_dir(prefix)
     return env

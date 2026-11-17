@@ -26,7 +26,7 @@ def check(binary):
         exe_dir.mkdir()
         cwd.mkdir()
         homes = {key: root / key for key in (
-            "HORIZON_HOME", "HORIZON_LAUNCHER_HOME", "XDG_DATA_HOME", "XDG_CONFIG_HOME",
+            "HORIZON_HOME", "HORIZON_LAUNCHER_HOME", "REA_LAUNCHER_HOME", "XDG_DATA_HOME", "XDG_CONFIG_HOME",
             "HORIZON_LAUNCHER_TRASH", "HORIZON_LAUNCHER_CLIPBOARD", "HORIZON_LAUNCHER_DESKTOP",
         )}
         env = lab.game_env(**homes, HORIZON_TELEMETRY_URL="off")

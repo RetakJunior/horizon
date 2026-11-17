@@ -1,4 +1,4 @@
-//! The Windows setup window: `horizon-launcher-setup.exe` installs, `horizon-launcher.exe
+//! The Windows setup window: `rea-launcher-setup.exe` installs, `rea-launcher.exe
 //! uninstall` removes. The launcher's own sky and plates (docs/design-system.md, "Night"); the
 //! work is `horizon_launcher::installer`, on a thread, reported over a channel.
 use crate::glass_ui;
@@ -57,7 +57,7 @@ pub fn open(mode: Mode, cx: &mut App) {
             window_bounds: Some(WindowBounds::Windowed(bounds)),
             window_min_size: Some(size(px(760.), px(520.))),
             titlebar: Some(titlebar::options()),
-            app_id: Some("horizon-launcher".into()),
+            app_id: Some("rea-launcher".into()),
             ..Default::default()
         },
         |window, cx| cx.new(|cx| Setup::new(mode, window, cx)),
@@ -277,10 +277,12 @@ impl Setup {
         match &self.stage {
             Stage::Welcome if self.mode == Mode::Install => {
                 body = body
-                    .child(text(night::UI, c(n.ink_soft)).child(
-                        tr("Installs Horizon Launcher for this account. No administrator needed.")
-                            .to_string(),
-                    ))
+                    .child(
+                        text(night::UI, c(n.ink_soft)).child(
+                            tr("Installs REa Launcher for this account. No administrator needed.")
+                                .to_string(),
+                        ),
+                    )
                     .child(self.folder_row(cx))
                     .child(self.toggle(
                         "desktop",
@@ -290,24 +292,26 @@ impl Setup {
                         |o| o.desktop = !o.desktop,
                         cx,
                     ))
-                    .child(div().flex().justify_end().child(
-                        crate::button(
-                            "go",
-                            if self.update {
-                                tr("Update").to_string()
-                            } else {
-                                tr("Install").to_string()
-                            },
-                            Kind::Primary,
-                            &t,
-                        )
-                        .on_click(cx.listener(|this, _: &ClickEvent, _, cx| this.start(cx))),
-                    ));
+                    .child(
+                        div().flex().justify_end().child(
+                            crate::button(
+                                "go",
+                                if self.update {
+                                    tr("Update").to_string()
+                                } else {
+                                    tr("Install").to_string()
+                                },
+                                Kind::Primary,
+                                &t,
+                            )
+                            .on_click(cx.listener(|this, _: &ClickEvent, _, cx| this.start(cx))),
+                        ),
+                    );
             }
             Stage::Welcome => {
                 body = body
                     .child(text(night::UI, c(n.ink_soft)).child(
-                        tr("Removes Horizon Launcher from this computer. Your worlds and the game's folder stay.")
+                        tr("Removes REa Launcher from this computer. Your worlds and the game's folder stay.")
                             .to_string(),
                     ))
                     .child(self.toggle(
@@ -346,8 +350,8 @@ impl Setup {
             }
             Stage::Done { left } => {
                 let said = match self.mode {
-                    Mode::Install => tr("Horizon Launcher is installed.").to_string(),
-                    Mode::Uninstall => tr("Horizon Launcher was removed.").to_string(),
+                    Mode::Install => tr("REa Launcher is installed.").to_string(),
+                    Mode::Uninstall => tr("REa Launcher was removed.").to_string(),
                 };
                 body = body.child(text(night::TITLE, c(n.ink)).child(said));
                 if !left.is_empty() {
@@ -396,7 +400,7 @@ impl Setup {
             .flex()
             .flex_col()
             .gap(px(18.))
-            .child(text(night::DISPLAY, c(n.ink)).child(tr("Horizon Launcher")))
+            .child(text(night::DISPLAY, c(n.ink)).child(tr("REa Launcher")))
             .child(body)
     }
 }

@@ -1,4 +1,4 @@
-//! `horizon-launcher <subcommand>`: the same steps as the window, from a terminal. Every
+//! `rea-launcher <subcommand>`: the same steps as the window, from a terminal. Every
 //! command goes through `backend`; this file only parses arguments and prints.
 mod progress;
 use progress::{native_progress, progress};
@@ -36,7 +36,7 @@ use std::path::{Path, PathBuf};
 use std::process::Command;
 #[derive(Parser)]
 #[command(
-    name = "horizon-launcher",
+    name = "rea-launcher",
     version = backend::VERSION,
     about = "Installs, prepares and starts Horizon. Without a subcommand, opens the window."
 )]
@@ -714,7 +714,7 @@ enum Cmd {
     /// Download and install a release (a tag such as v2026.10.13, or "latest")
     Install { tag: String },
     /// Install a local unsigned developer build from a trusted checkout
-    #[command(about = tr("Install a local unsigned developer build from a trusted checkout"), after_help = tr("Example: horizon-launcher developer-install CHECKOUT --program CHECKOUT/target/debug/horizon-client --trust-unsigned\nThis executes the checkout's build code and an unsigned game with your rights. Trust both before continuing."), long_about = tr("Install a local unsigned developer build. This runs the checkout's build code through cargo run -p xtask -- package. Commit tracked changes and rebuild first. Build horizon-ctl, horizon-prepare and horizon-server beside the game, generate horizon-wasm-std.wasm beside it with cargo run --locked -p cargo-horizon-mod -- wasm-std PATH, and compile exporters into the checkout's exporters folder. Native builds use the saved local source commit, including unpublished commits. Select this base explicitly; automatic updates never replace it."))]
+    #[command(about = tr("Install a local unsigned developer build from a trusted checkout"), after_help = tr("Example: rea-launcher developer-install CHECKOUT --program CHECKOUT/target/debug/horizon-client --trust-unsigned\nThis executes the checkout's build code and an unsigned game with your rights. Trust both before continuing."), long_about = tr("Install a local unsigned developer build. This runs the checkout's build code through cargo run -p xtask -- package. Commit tracked changes and rebuild first. Build horizon-ctl, horizon-prepare and horizon-server beside the game, generate horizon-wasm-std.wasm beside it with cargo run --locked -p cargo-horizon-mod -- wasm-std PATH, and compile exporters into the checkout's exporters folder. Native builds use the saved local source commit, including unpublished commits. Select this base explicitly; automatic updates never replace it."))]
     DeveloperInstall(developer_builds::DeveloperInstall),
     /// Remove an installed version
     Remove { tag: String },
@@ -1243,7 +1243,7 @@ fn execute(command: Cmd, as_json: bool) -> Result<i32, String> {
             clap_complete::generate(
                 shell,
                 &mut self::command(),
-                "horizon-launcher",
+                "rea-launcher",
                 &mut std::io::stdout(),
             );
         }
@@ -1301,9 +1301,7 @@ fn execute(command: Cmd, as_json: bool) -> Result<i32, String> {
                     "Installed {tag}. It is prepared already, from another installed version."
                 );
             } else {
-                println!(
-                    "Installed {tag}. Prepare it next: horizon-launcher prepare --version {tag}"
-                );
+                println!("Installed {tag}. Prepare it next: rea-launcher prepare --version {tag}");
             }
         }
         Cmd::Storage { clear } => {
@@ -1540,7 +1538,7 @@ fn execute(command: Cmd, as_json: bool) -> Result<i32, String> {
                     Accounts::load()
                         .find(&who)
                         .ok_or_else(|| {
-                            format!("No signed-in account {who}. See `horizon-launcher account`.")
+                            format!("No signed-in account {who}. See `rea-launcher account`.")
                         })?
                         .uuid
                         .clone(),
@@ -1751,7 +1749,7 @@ fn execute(command: Cmd, as_json: bool) -> Result<i32, String> {
             } else {
                 println!("{}", shared.url);
                 println!(
-                    "Delete it: horizon-launcher unshare-log {}:{}",
+                    "Delete it: rea-launcher unshare-log {}:{}",
                     shared.id, shared.token
                 );
             }
@@ -1883,7 +1881,7 @@ fn rust(action: RustCmd, as_json: bool) -> Result<(), String> {
                 match (&installed, &version) {
                     (Some(t), Some(v)) => println!("{v} in {}", t.dir.display()),
                     _ => println!(
-                        "Rust {} is not installed (`horizon-launcher rust install`).",
+                        "Rust {} is not installed (`rea-launcher rust install`).",
                         rust::VERSION
                     ),
                 }
@@ -1931,7 +1929,10 @@ fn update(check: bool, as_json: bool) -> Result<(), String> {
         }
     }
     match &updates.launcher {
-        None => println!("Launcher: {} is up to date.", backend::VERSION),
+        None => println!(
+            "{}",
+            tr("Launcher self-updates are disabled in REa Launcher.")
+        ),
         Some(r) => {
             let version = backend::launcher_version(&r.tag).unwrap_or_default();
             if check {
@@ -1956,7 +1957,7 @@ fn account_command(action: AccountCmd, as_json: bool) -> Result<(), String> {
         accounts
             .find(who)
             .cloned()
-            .ok_or_else(|| format!("No signed-in account {who}. See `horizon-launcher account`."))
+            .ok_or_else(|| format!("No signed-in account {who}. See `rea-launcher account`."))
     };
     match action {
         AccountCmd::List => {
@@ -1973,7 +1974,7 @@ fn account_command(action: AccountCmd, as_json: bool) -> Result<(), String> {
             } else if accounts.accounts.is_empty() {
                 println!(
                     "No Microsoft account signed in. Play needs one that owns Minecraft: Java \
-                     Edition: horizon-launcher account sign-in"
+                     Edition: rea-launcher account sign-in"
                 );
             } else {
                 for a in &accounts.accounts {
@@ -2139,10 +2140,7 @@ fn data(action: DataCmd, as_json: bool) -> Result<(), String> {
                 println!("{name}: {}", if on { "on" } else { "off" });
             }
             println!("Waiting to be sent: {}", status["waiting"]);
-            match horizon_telemetry::endpoint() {
-                Some(url) => println!("Server: {url}"),
-                None => println!("Server: turned off (HORIZON_TELEMETRY_URL=off), nothing is sent"),
-            }
+            println!("{}", tr("Telemetry sending is disabled in REa Launcher."));
         }
         DataCmd::Allow { kinds } => {
             telemetry::set(&telemetry::parse_kinds(&kinds)?, true)?;
@@ -2182,9 +2180,7 @@ fn servers(action: ServersCmd, as_json: bool) -> Result<(), String> {
         servers::list()
             .into_iter()
             .find(|e| e.name == which || e.dir == std::path::Path::new(which))
-            .ok_or_else(|| {
-                format!("No server called {which}: `horizon-launcher servers` lists them")
-            })
+            .ok_or_else(|| format!("No server called {which}: `rea-launcher servers` lists them"))
     };
     match action {
         ServersCmd::List => {
@@ -2201,7 +2197,7 @@ fn servers(action: ServersCmd, as_json: bool) -> Result<(), String> {
                         .collect(),
                 ));
             } else if list.is_empty() {
-                println!("No server yet: horizon-launcher servers create --accept-eula");
+                println!("No server yet: rea-launcher servers create --accept-eula");
             }
             for e in list.iter().filter(|_| !as_json) {
                 println!(
@@ -2336,9 +2332,7 @@ fn mods(action: ModsCmd, as_json: bool) -> Result<(), String> {
             if as_json {
                 json(list.iter().map(entry_json).collect());
             } else if list.is_empty() && github_mods::origins(&home).is_empty() {
-                println!(
-                    "Nothing installed from the browser yet: horizon-launcher mods search <text>"
-                );
+                println!("Nothing installed from the browser yet: rea-launcher mods search <text>");
             }
             for o in horizon_launcher::github_mods::origins(&home)
                 .iter()
@@ -2443,9 +2437,9 @@ fn mods(action: ModsCmd, as_json: bool) -> Result<(), String> {
                         p.summary
                     );
                     if unchecked {
-                        println!("  horizon-launcher mods check {}", p.slug);
+                        println!("  rea-launcher mods check {}", p.slug);
                     } else if datapack {
-                        println!("  horizon-launcher mods install {} --world <world>", p.slug);
+                        println!("  rea-launcher mods install {} --world <world>", p.slug);
                     } else if let Some(why) = support.reason() {
                         println!("  {why}");
                     }
@@ -2547,7 +2541,7 @@ fn mods(action: ModsCmd, as_json: bool) -> Result<(), String> {
                         pack.version,
                         pack.mods.join(", ")
                     );
-                    println!("Play it: horizon-launcher modpack play {}", pack.id);
+                    println!("Play it: rea-launcher modpack play {}", pack.id);
                 }
                 return Ok(());
             }
@@ -2562,7 +2556,7 @@ fn mods(action: ModsCmd, as_json: bool) -> Result<(), String> {
                     .map(|t| backend::resources(&t));
                 let pack = modpacks::import_and_port(&file, resources.as_deref(), log)?;
                 println!("{} ({})", modpacks::outcome(&pack), pack.summary());
-                println!("Play it: horizon-launcher modpack play {}", pack.slug);
+                println!("Play it: rea-launcher modpack play {}", pack.slug);
                 return Ok(());
             }
             let done = match &java {
@@ -2656,7 +2650,7 @@ fn mods(action: ModsCmd, as_json: bool) -> Result<(), String> {
             if origins.is_empty() {
                 return Err(match id {
                     Some(i) => format!("{i} wasn't installed from GitHub."),
-                    None => "No native mod was installed from GitHub: horizon-launcher mods add-github <url>".into(),
+                    None => "No native mod was installed from GitHub: rea-launcher mods add-github <url>".into(),
                 });
             }
             for o in origins {
@@ -3139,7 +3133,7 @@ fn instance(action: InstanceCmd, as_json: bool) -> Result<(), String> {
                 [] => {
                     return Err(format!(
                         "No other launcher has an instance called {name}: \
-                         horizon-launcher instance others"
+                         rea-launcher instance others"
                     ));
                 }
                 _ => {
@@ -3175,7 +3169,7 @@ fn instance(action: InstanceCmd, as_json: bool) -> Result<(), String> {
                 json(value(&i, false));
             } else {
                 println!(
-                    "Made the Java instance {} in {}: horizon-launcher play --instance \"{}\"",
+                    "Made the Java instance {} in {}: rea-launcher play --instance \"{}\"",
                     i.name,
                     i.home.display(),
                     i.name
@@ -3192,7 +3186,7 @@ fn instance(action: InstanceCmd, as_json: bool) -> Result<(), String> {
                         json(value(&i, false));
                     } else {
                         println!(
-                            "Made the instance {} in {}: horizon-launcher instance select \"{}\"",
+                            "Made the instance {} in {}: rea-launcher instance select \"{}\"",
                             i.name,
                             i.home.display(),
                             i.name
@@ -3202,10 +3196,7 @@ fn instance(action: InstanceCmd, as_json: bool) -> Result<(), String> {
                 Dropped::Modpack => {
                     let pack = modpacks::import(&file, &|line: String| eprintln!("{line}"))?;
                     println!("{} ({})", modpacks::outcome(&pack), pack.summary());
-                    println!(
-                        "Port and play it: horizon-launcher modpack port {}",
-                        pack.slug
-                    );
+                    println!("Port and play it: rea-launcher modpack port {}", pack.slug);
                 }
                 // A game build is its own command: it installs a version
                 // rather than touching an instance, and takes a `--version` to
@@ -3225,13 +3216,13 @@ fn instance(action: InstanceCmd, as_json: bool) -> Result<(), String> {
                     };
                     let p = horizon_launcher::packs::add(&i.home, &file)?;
                     println!(
-                        "Added {} to {}: turn it on with horizon-launcher packs on",
+                        "Added {} to {}: turn it on with rea-launcher packs on",
                         p.title, i.name
                     );
                 }
                 Dropped::DataPack => {
                     return Err(format!(
-                        "{} is a data pack: put it into a world with horizon-launcher worlds \
+                        "{} is a data pack: put it into a world with rea-launcher worlds \
                          datapack-add <world> <file>",
                         file.display()
                     ));
@@ -3622,7 +3613,7 @@ fn modpack(action: ModpackCmd, as_json: bool) -> Result<i32, String> {
             let packs = modpacks::list();
             let registry = horizon::pack::list();
             if packs.is_empty() && registry.is_empty() && !as_json {
-                println!("No modpack imported yet: horizon-launcher modpack import <pack>");
+                println!("No modpack imported yet: rea-launcher modpack import <pack>");
             }
             packs.iter().for_each(show);
             for p in &registry {
@@ -3710,8 +3701,8 @@ mod tests {
                 .stdout(std::process::Stdio::null())
                 .stderr(std::process::Stdio::inherit());
             for (key, folder) in [
-                ("HORIZON_HOME", "logs"),
-                ("HORIZON_LAUNCHER_HOME", "launcher"),
+                ("REA_HOME", "logs"),
+                ("REA_LAUNCHER_HOME", "launcher"),
                 ("XDG_DATA_HOME", "xdg-data"),
                 ("XDG_CONFIG_HOME", "xdg-config"),
                 ("HORIZON_LAUNCHER_TRASH", "trash"),
@@ -3786,18 +3777,18 @@ mod tests {
             clap_complete::Shell::PowerShell,
         ] {
             let shell_name = shell.to_string();
-            let args = ["horizon-launcher", "completions", shell_name.as_str()].map(str::to_owned);
+            let args = ["rea-launcher", "completions", shell_name.as_str()].map(str::to_owned);
             let cli = Cli::try_parse_from(args).unwrap();
             assert!(matches!(cli.command, Some(Cmd::Completions { .. })));
             let mut output = Vec::new();
-            clap_complete::generate(shell, &mut command(), "horizon-launcher", &mut output);
+            clap_complete::generate(shell, &mut command(), "rea-launcher", &mut output);
             let script = String::from_utf8(output).unwrap();
-            assert!(script.contains("horizon-launcher"));
+            assert!(script.contains("rea-launcher"));
             assert!(script.contains("versions"));
             assert!(script.contains("multiplayer"));
         }
-        assert!(Cli::try_parse_from(["horizon-launcher", "completions"]).is_err());
-        assert!(Cli::try_parse_from(["horizon-launcher", "completions", "unknown"]).is_err());
+        assert!(Cli::try_parse_from(["rea-launcher", "completions"]).is_err());
+        assert!(Cli::try_parse_from(["rea-launcher", "completions", "unknown"]).is_err());
     }
 
     #[test]
@@ -3818,7 +3809,7 @@ mod tests {
 
     #[test]
     fn play_takes_an_account_for_one_launch() {
-        let cli = Cli::try_parse_from(["horizon-launcher", "play", "--account", "Alex"]).unwrap();
+        let cli = Cli::try_parse_from(["rea-launcher", "play", "--account", "Alex"]).unwrap();
         match cli.command {
             Some(Cmd::Play { account, .. }) => assert_eq!(account.as_deref(), Some("Alex")),
             _ => panic!("not play"),
@@ -3828,7 +3819,7 @@ mod tests {
     #[test]
     fn play_takes_extra_arguments_that_start_with_hyphens() {
         let cli = Cli::try_parse_from([
-            "horizon-launcher",
+            "rea-launcher",
             "play",
             "--arg",
             "--server-thread",
@@ -3845,7 +3836,7 @@ mod tests {
     #[test]
     fn game_args_takes_one_line_that_starts_with_hyphens() {
         let cli = Cli::try_parse_from([
-            "horizon-launcher",
+            "rea-launcher",
             "game-args",
             "--server-thread --render-distance 40",
         ])
@@ -3873,7 +3864,7 @@ mod tests {
     #[test]
     fn mods_commands_name_their_instance() {
         let parse = |args: &[&str]| {
-            let cli = Cli::try_parse_from([&["horizon-launcher", "mods"], args].concat()).unwrap();
+            let cli = Cli::try_parse_from([&["rea-launcher", "mods"], args].concat()).unwrap();
             match cli.command {
                 Some(Cmd::Mods { action }) => action,
                 _ => panic!("expected mods"),
@@ -3927,8 +3918,7 @@ mod tests {
             Some(ModsCmd::Search { instance: Some(i), .. }) if i == "A"
         ));
         assert!(
-            Cli::try_parse_from(["horizon-launcher", "mods", "check", "x", "--instance", "A"])
-                .is_err()
+            Cli::try_parse_from(["rea-launcher", "mods", "check", "x", "--instance", "A"]).is_err()
         );
     }
 
@@ -3936,11 +3926,7 @@ mod tests {
     fn native_build_sync_is_explicit_and_never_selects_an_instance() {
         let parse = |args: &[&str]| {
             Cli::try_parse_from(
-                [
-                    &["horizon-launcher", "native-build", "--sync-internals"],
-                    args,
-                ]
-                .concat(),
+                [&["rea-launcher", "native-build", "--sync-internals"], args].concat(),
             )
         };
         assert!(matches!(
@@ -3966,7 +3952,7 @@ mod tests {
         let parse = |args: &[&str]| {
             Cli::try_parse_from(
                 [
-                    &["horizon-launcher", "native-build", "--trust-native-code"],
+                    &["rea-launcher", "native-build", "--trust-native-code"],
                     args,
                 ]
                 .concat(),

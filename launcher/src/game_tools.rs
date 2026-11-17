@@ -187,7 +187,7 @@ impl GameTools {
             // handshake revision: older versions do not know the stateless one.
             "initialize",
             json!({ "protocolVersion": horizon_mcp::LEGACY, "capabilities": {},
-                    "clientInfo": { "name": "horizon-launcher", "version": backend::VERSION } }),
+                    "clientInfo": { "name": "rea-launcher", "version": backend::VERSION } }),
         )?;
         tools.send(&json!({ "jsonrpc": "2.0", "method": "notifications/initialized" }))?;
         let listed = tools.rpc("tools/list", json!({}))?;

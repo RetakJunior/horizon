@@ -1,5 +1,5 @@
 //! A shortcut on the desktop that plays one instance: it runs
-//! `horizon-launcher play --instance <id>`, so the game starts without the launcher's window.
+//! `rea-launcher play --instance <id>`, so the game starts without the launcher's window.
 //!
 //! - Linux: `<name> (Horizon).desktop` on the desktop (executable, and marked trusted with `gio`
 //!   where it exists, so GNOME starts it), and the same entry in the applications menu

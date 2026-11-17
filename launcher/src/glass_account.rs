@@ -51,7 +51,10 @@ impl Launcher {
             Some(a) if a.offline => (
                 Some(a.uuid.clone()),
                 a.name.clone(),
-                (Tone::Live, tr("Offline account · single-player & LAN / offline servers")),
+                (
+                    Tone::Live,
+                    tr("Offline account · single-player & LAN / offline servers"),
+                ),
             ),
             Some(a) => (
                 Some(a.uuid.clone()),

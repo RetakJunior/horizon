@@ -2,3 +2,7 @@
 # web/perf/README.md work as written. `cargo run -p xtask -- …` stays equivalent.
 [alias]
 xtask = "run --package xtask --"
+
+# GPUI's Linux font backend loads fontconfig at runtime in launcher builds.
+[env]
+RUST_FONTCONFIG_DLOPEN = { value = "1", force = true }

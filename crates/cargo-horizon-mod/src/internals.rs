@@ -139,8 +139,7 @@ pub(crate) fn catalog_directory(dir: &Path, manifest: &Manifest) -> Result<PathB
     if native.module.is_empty() {
         return crate::sdk_fetch::build_data(dir, &native.horizon);
     }
-    let launcher =
-        std::env::var_os("HORIZON_LAUNCHER").unwrap_or_else(|| "horizon-launcher".into());
+    let launcher = launcher_exe();
     let snapshots = dir.join("target/horizon-mod/catalog-snapshots");
     fs::create_dir_all(&snapshots).map_err(|e| e.to_string())?;
     let destination = snapshots
@@ -160,7 +159,7 @@ pub(crate) fn catalog_directory(dir: &Path, manifest: &Manifest) -> Result<PathB
         .arg(dir.canonicalize().map_err(|e| e.to_string())?)
         .stderr(std::process::Stdio::inherit())
         .output()
-        .map_err(|e| format!("Could not run horizon-launcher: {e}. Install it on PATH or set HORIZON_LAUNCHER to its executable."))?;
+        .map_err(|e| format!("Could not run REa Launcher: {e}. Install rea-launcher on PATH or set REA_LAUNCHER to its executable."))?;
     if !output.status.success() {
         return Err("Module catalog discovery failed".into());
     }
@@ -180,13 +179,12 @@ fn sync(dir: &Path) -> Result<(), String> {
         .native
         .as_ref()
         .ok_or("internals sync needs a [native] mod")?;
-    let launcher =
-        std::env::var_os("HORIZON_LAUNCHER").unwrap_or_else(|| "horizon-launcher".into());
+    let launcher = launcher_exe();
     let output = std::process::Command::new(launcher)
         .args(["native-build", "--sync-internals", "--trust-native-code"])
         .arg(dir.canonicalize().map_err(|e| e.to_string())?)
         .stderr(std::process::Stdio::inherit())
-        .output().map_err(|e| format!("Could not run horizon-launcher: {e}. Install it on PATH or set HORIZON_LAUNCHER to its executable."))?;
+        .output().map_err(|e| format!("Could not run REa Launcher: {e}. Install rea-launcher on PATH or set REA_LAUNCHER to its executable."))?;
     if !output.status.success() {
         return Err("Internals discovery failed; the manifest was not changed.".into());
     }
@@ -200,6 +198,12 @@ fn sync(dir: &Path) -> Result<(), String> {
     atomic_write(&path, candidate)?;
     print!("{report}");
     Ok(())
+}
+
+fn launcher_exe() -> std::ffi::OsString {
+    std::env::var_os("REA_LAUNCHER")
+        .or_else(|| std::env::var_os("HORIZON_LAUNCHER"))
+        .unwrap_or_else(|| "rea-launcher".into())
 }
 
 /// Manifest edits follow a user-managed symlink; slot publishing replaces its output link.

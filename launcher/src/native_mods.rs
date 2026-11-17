@@ -2625,7 +2625,7 @@ pub(crate) fn copy_base(
 /// nor any `horizon-engine` the base shipped, which would run unmodded beside its own.
 fn carried_over(name: &std::ffi::OsStr, target: Target) -> bool {
     let mut own: Vec<String> = [
-        "Horizon.app",
+        "REa Launcher.app",
         "native-mods.json",
         "native-data",
         horizon_platform::mod_package::mod_list::NATIVE_DIR,
@@ -2695,8 +2695,8 @@ mod tests {
                     "native_mods::tests::a_native_build_starts_from_a_release_the_launcher_installed",
                 ])
                 .env("HORIZON_PLAYER_FLOW_CHILD", "1")
-                .env("HORIZON_LAUNCHER_HOME", home.path().join("launcher"))
-                .env("HORIZON_HOME", home.path().join("home"))
+                .env("REA_LAUNCHER_HOME", home.path().join("launcher"))
+                .env("REA_HOME", home.path().join("home"))
                 .env("XDG_DATA_HOME", home.path().join("data"))
                 .env("XDG_CONFIG_HOME", home.path().join("config"))
                 .env("HORIZON_LAUNCHER_NO_SELF_UPDATE", "1")
@@ -2761,7 +2761,7 @@ mod tests {
             };
             backend::install_as(&release, tag, &sha256, None, |_| {}).unwrap();
             server.join().unwrap();
-            // `horizon-launcher prepare` writes the resources from the player's own Minecraft.
+            // `rea-launcher prepare` writes the resources from the player's own Minecraft.
             let resources = backend::resources(tag);
             fs::create_dir_all(&resources).unwrap();
             fs::write(resources.join("horizon-resources.json"), b"{}").unwrap();
@@ -3065,11 +3065,11 @@ mod tests {
 
     /// Takes the shared test lock after checking that settings, build log and builds resolve
     /// under the lib tests' scratch home, never a real install (no env changes: they race). A
-    /// home the developer set with `HORIZON_LAUNCHER_HOME` / `HORIZON_HOME` is theirs to choose.
+    /// home the developer set with `REA_LAUNCHER_HOME` / `REA_HOME` is theirs to choose.
     pub(super) fn scratch_state() -> std::sync::MutexGuard<'static, ()> {
         let scratch = crate::data_location::test_home();
         let set = |name| std::env::var_os(name).is_some();
-        if !set("HORIZON_LAUNCHER_HOME") {
+        if !set("REA_LAUNCHER_HOME") {
             assert!(
                 backend::data_dir().starts_with(&scratch),
                 "settings outside the scratch home"
@@ -3079,7 +3079,7 @@ mod tests {
                 "builds outside the scratch home"
             );
         }
-        if !set("HORIZON_HOME") {
+        if !set("REA_HOME") {
             assert!(
                 backend::game_home().starts_with(&scratch),
                 "game outside the scratch home"
@@ -3690,8 +3690,8 @@ mod tests {
                 .stdout(Stdio::piped())
                 .stderr(Stdio::piped());
             for (variable, directory) in [
-                ("HORIZON_LAUNCHER_HOME", "launcher"),
-                ("HORIZON_HOME", "home"),
+                ("REA_LAUNCHER_HOME", "launcher"),
+                ("REA_HOME", "home"),
                 ("XDG_DATA_HOME", "data"),
                 ("XDG_CONFIG_HOME", "config"),
                 ("XDG_CACHE_HOME", "cache"),
@@ -4282,7 +4282,7 @@ mod tests {
         let err = r#"{
   "code": "E_TARGET_NOT_FOUND",
   "message": "no source function 'horizon_client::game::titles::Game<'_>::draw_titles'",
-  "file": "/home/p/.local/share/horizon-launcher/native/mixins.incoming/appleskin/horizon-mixin.toml",
+  "file": "/home/p/.local/share/rea-launcher/native/mixins.incoming/appleskin/horizon-mixin.toml",
   "mod_id": "appleskin",
   "injection_id": "hud",
   "target": "horizon_client::game::titles::Game<'_>::draw_titles"
@@ -4306,7 +4306,7 @@ mod tests {
         let err = r#"{
   "code": "E_MODULE_CONFLICT",
   "message": "conflict in module horizon_physics",
-  "file": "/home/p/.local/share/horizon-launcher/native/mixins.incoming/horizon_physics/horizon-mixin.toml"
+  "file": "/home/p/.local/share/rea-launcher/native/mixins.incoming/horizon_physics/horizon-mixin.toml"
 }"#;
         let line = diagnostic(err).unwrap();
         assert!(
@@ -4320,7 +4320,7 @@ mod tests {
         let err_win = r#"{
   "code": "E_MODULE_CONFLICT",
   "message": "conflict in module biomecompass",
-  "file": "C:\\Users\\p\\AppData\\Local\\horizon-launcher\\native\\mixins.incoming\\biomecompass\\horizon-mixin.toml"
+  "file": "C:\\Users\\p\\AppData\\Local\\rea-launcher\\native\\mixins.incoming\\biomecompass\\horizon-mixin.toml"
 }"#;
         let line_win = diagnostic(err_win).unwrap();
         assert!(
@@ -4333,7 +4333,7 @@ mod tests {
         let err_mods = r#"{
   "code": "E_MODULE_CONFLICT",
   "message": "conflict in module worldedit",
-  "file": "/home/p/.local/share/horizon-launcher/native/mods.incoming/worldedit/horizon-mod.toml"
+  "file": "/home/p/.local/share/rea-launcher/native/mods.incoming/worldedit/horizon-mod.toml"
 }"#;
         let line_mods = diagnostic(err_mods).unwrap();
         assert!(

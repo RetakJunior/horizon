@@ -46,7 +46,7 @@ fn run_refuses_code_mods_without_building() {
         "{error}"
     );
     assert!(
-        error.contains("horizon-launcher native-build . --trust-native-code"),
+        error.contains("rea-launcher native-build . --trust-native-code"),
         "{error}"
     );
     assert!(

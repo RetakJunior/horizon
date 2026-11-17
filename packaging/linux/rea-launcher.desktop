@@ -1,0 +1,10 @@
+[Desktop Entry]
+Type=Application
+Name=REa Launcher
+GenericName=Game launcher
+Comment=Install, prepare and play Minecraft: Java Edition 26.3
+Exec=rea-launcher
+Icon=rea-launcher
+Terminal=false
+Categories=Game;
+StartupWMClass=rea-launcher

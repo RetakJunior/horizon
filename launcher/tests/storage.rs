@@ -13,12 +13,12 @@ impl Home {
         path
     }
     fn run(&self, args: &[&str]) -> std::process::Output {
-        let mut command = Command::new(env!("CARGO_BIN_EXE_horizon-launcher"));
+        let mut command = Command::new(env!("CARGO_BIN_EXE_rea-launcher"));
         command.args(args);
         command
             .current_dir(self.0.path())
-            .env("HORIZON_HOME", self.0.path().join("game"))
-            .env("HORIZON_LAUNCHER_HOME", self.0.path().join("launcher"))
+            .env("REA_HOME", self.0.path().join("game"))
+            .env("REA_LAUNCHER_HOME", self.0.path().join("launcher"))
             .env("XDG_DATA_HOME", self.0.path().join("data"))
             .env("XDG_CONFIG_HOME", self.0.path().join("config"))
             .env("HORIZON_LAUNCHER_TRASH", self.0.path().join("trash"))

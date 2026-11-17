@@ -389,7 +389,7 @@ fn final_launch_combines_only_enabled_content_dev_and_adjacent_native_candidates
     let mut command = Command::new(&program);
     command
         .current_dir(&root.0)
-        .env("HORIZON_HOME", root.0.join("wrong-cache"))
+        .env("REA_HOME", root.0.join("wrong-cache"))
         .args(["--game-dir", "game", "--home", "cache", "--dev-mod"])
         .arg(dev_path);
     let error = prepare_launch(
@@ -437,11 +437,11 @@ fn final_launch_combines_only_enabled_content_dev_and_adjacent_native_candidates
     let mut server = Command::new(&program);
     server
         .current_dir(&game)
-        .env("HORIZON_HOME", root.0.join("wrong-cache"))
+        .env("REA_HOME", root.0.join("wrong-cache"))
         .args(["--dedicated", "--nogui"]);
     let mut launch = crate::launch::Launch::default();
     launch.env.insert(
-        "HORIZON_HOME".into(),
+        "REA_HOME".into(),
         root.0.join("cache").to_str().unwrap().into(),
     );
     prepare_launch(&mut server, &launch, Permission::headless(false)).unwrap();
@@ -454,7 +454,7 @@ fn information_requests_do_not_read_packages_or_create_a_cache() {
         let mut command = std::process::Command::new(root.0.join("not-installed"));
         command
             .current_dir(&root.0)
-            .env("HORIZON_HOME", root.0.join("cache"))
+            .env("REA_HOME", root.0.join("cache"))
             .args([flag, "--missing-value"]);
         prepare_launch(
             &mut command,

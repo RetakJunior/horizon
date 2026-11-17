@@ -28,11 +28,11 @@ fn fixture() -> PathBuf {
 fn launch(root: &Path) -> Child {
     let inherited_path = std::env::var_os("PATH").unwrap();
     let paths = std::iter::once(root.join("probes")).chain(std::env::split_paths(&inherited_path));
-    horizon_launcher::process::command(env!("CARGO_BIN_EXE_horizon-launcher"))
+    horizon_launcher::process::command(env!("CARGO_BIN_EXE_rea-launcher"))
         .current_dir(root)
         .env("PATH", std::env::join_paths(paths).unwrap())
-        .env("HORIZON_HOME", root.join("game"))
-        .env("HORIZON_LAUNCHER_HOME", root.join("launcher"))
+        .env("REA_HOME", root.join("game"))
+        .env("REA_LAUNCHER_HOME", root.join("launcher"))
         .env("XDG_DATA_HOME", root.join("data"))
         .env("XDG_CONFIG_HOME", root.join("config"))
         .env("HORIZON_LAUNCHER_NO_SELF_UPDATE", "1")
@@ -130,7 +130,7 @@ fn one_mib_entry_stack(source: &Path, directory: &Path) -> PathBuf {
 fn cli_settings_work_with_one_mib_process_stack() {
     let home = tempfile::tempdir().unwrap();
     let root = home.path();
-    let executable = one_mib_entry_stack(Path::new(env!("CARGO_BIN_EXE_horizon-launcher")), root);
+    let executable = one_mib_entry_stack(Path::new(env!("CARGO_BIN_EXE_rea-launcher")), root);
     fs::create_dir(root.join("launcher")).unwrap();
     fs::write(
         root.join("launcher/settings.json"),
@@ -141,8 +141,8 @@ fn cli_settings_work_with_one_mib_process_stack() {
         horizon_launcher::process::command(&executable)
             .args(args)
             .current_dir(root)
-            .env("HORIZON_HOME", root.join("game"))
-            .env("HORIZON_LAUNCHER_HOME", root.join("launcher"))
+            .env("REA_HOME", root.join("game"))
+            .env("REA_LAUNCHER_HOME", root.join("launcher"))
             .env("XDG_DATA_HOME", root.join("data"))
             .env("XDG_CONFIG_HOME", root.join("config"))
             .env("HORIZON_LAUNCHER_TRASH", root.join("trash"))

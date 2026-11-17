@@ -46,7 +46,7 @@ pub(super) fn import(
     } else if prepared {
         println!("{}", trf("Imported {version} and selected it. It is prepared already, from another installed version.", &[("version", &tag)]));
     } else {
-        println!("{}", trf("Imported {version} and selected it. Prepare it next: horizon-launcher prepare --version {version}", &[("version", &tag)]));
+        println!("{}", trf("Imported {version} and selected it. Prepare it next: rea-launcher prepare --version {version}", &[("version", &tag)]));
     }
     Ok(())
 }

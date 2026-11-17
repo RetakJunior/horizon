@@ -254,6 +254,7 @@ impl Theme {
         let look = Glass::new(accent.rgb(), TINT, BLUR);
         let look = if dark { look } else { light_look(look) };
         Self {
+            page: if dark { c(0x0b1020) } else { self.page },
             plate_soft: white(fill::ROW_HOVER),
             plate: white(fill::BUTTON),
             rule: white(fill::BUTTON),

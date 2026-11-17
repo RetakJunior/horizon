@@ -414,7 +414,7 @@ fn png_8x8() -> String {
 
 fn scratch(name: &str) -> PathBuf {
     let root = std::env::temp_dir().join(format!(
-        "horizon-launcher-wardrobe-{name}-{}",
+        "rea-launcher-wardrobe-{name}-{}",
         std::process::id()
     ));
     let _ = std::fs::remove_dir_all(&root);

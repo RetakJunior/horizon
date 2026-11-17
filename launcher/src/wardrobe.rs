@@ -717,7 +717,7 @@ fn agent(url: &str) -> ureq::Agent {
     crate::proxy::agent(
         ureq::AgentBuilder::new()
             .timeout(Duration::from_secs(15))
-            .user_agent(&format!("horizon-launcher/{}", crate::backend::VERSION)),
+            .user_agent(&format!("rea-launcher/{}", crate::backend::VERSION)),
         url,
     )
     .build()

@@ -13,11 +13,17 @@ use std::path::{Path, PathBuf};
 /// An accent: a hue in degrees, or none for Horizon's violet, whose tokens are the palette's own
 /// and stay untouched; and for a colour typed as hex, that colour (the glass look wears it as
 /// is, the light look takes its hue).
-#[derive(Clone, Copy, Debug, Default, PartialEq, serde::Serialize, serde::Deserialize)]
+#[derive(Clone, Copy, Debug, PartialEq, serde::Serialize, serde::Deserialize)]
 #[serde(try_from = "String", into = "String")]
 pub struct Accent {
     hue: Option<f32>,
     rgb: Option<u32>,
+}
+
+impl Default for Accent {
+    fn default() -> Self {
+        Self::from_rgb(0x00e5ff)
+    }
 }
 
 /// The accent a launcher theme brings: a hue in degrees (First Light) or one exact colour (Nord's

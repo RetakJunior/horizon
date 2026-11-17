@@ -414,7 +414,7 @@ mod tests {
         fs::write(base.join("research-lock.json"), b"lock").unwrap();
         fs::write(base.join(CLIENT), b"signed").unwrap();
         fs::write(base.join(".installed"), b"").unwrap();
-        fs::create_dir_all(base.join("Horizon.app")).unwrap();
+        fs::create_dir_all(base.join("REa Launcher.app")).unwrap();
         let built = program(b"fork build");
         let tag = install_in(
             &versions,
@@ -439,7 +439,7 @@ mod tests {
             .is_file());
         assert_eq!(fs::read(dir.join("research-lock.json")).unwrap(), b"lock");
         // The macOS app is made again from the imported program (game_app.rs).
-        assert!(!dir.join("Horizon.app").exists());
+        assert!(!dir.join("REa Launcher.app").exists());
         let record: serde_json::Value =
             serde_json::from_str(&fs::read_to_string(dir.join(RECORD)).unwrap()).unwrap();
         assert_eq!(record["base"], "nightly-2026-11-01-c9d474d");
@@ -533,9 +533,9 @@ mod tests {
         fs::write(&plain, program(b"plain")).unwrap();
         assert_eq!(read_program(&plain, name).unwrap(), program(b"plain"));
         // Even a marked program under another executable's name is refused.
-        let launcher = d.join("horizon-launcher");
+        let launcher = d.join("rea-launcher");
         fs::write(&launcher, program(b"launcher")).unwrap();
-        assert!(read_program(&launcher, "horizon-launcher").is_err());
+        assert!(read_program(&launcher, "rea-launcher").is_err());
         let empty = d.join("empty.zip");
         let mut zip = zip::ZipWriter::new(fs::File::create(&empty).unwrap());
         zip.start_file("README.md", options).unwrap();

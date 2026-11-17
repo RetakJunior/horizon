@@ -1,9 +1,14 @@
 [package]
-name = "horizon-launcher"
+name = "rea-launcher"
 version = "0.2.0"
 edition = "2021"
 license = "LGPL-3.0-or-later"
-description = "Downloads, prepares and starts Horizon builds"
+description = "REa Launcher downloads, prepares and starts Minecraft: Java Edition 26.3"
+
+[lib]
+# Keep the Rust import path stable for the launcher binary while the installed executable is
+# branded `rea-launcher`.
+name = "horizon_launcher"
 
 [workspace]
 
@@ -56,7 +61,7 @@ horizon-launcher-scenery = { path = "scenery" }
 horizon-platform = { path = "../crates/horizon-platform", features = ["prepare", "protocol", "world", "mod-build", "mod-index", "mod-prebuilt", "mod-runtime-process"] }
 horizon-cosmetics = { path = "../crates/horizon-cosmetics" }
 glam = "0.30"
-# `horizon-launcher mcp`: the Model Context Protocol, shared with horizon-ctl and horizon-server.
+# `rea-launcher mcp`: the Model Context Protocol, shared with horizon-ctl and horizon-server.
 horizon-mcp = { path = "../crates/horizon-mcp" }
 # Join a friend: invite codes (the game does the joining).
 horizon-friends = { path = "../crates/horizon-friends" }
@@ -126,6 +131,9 @@ libc = "0.2"
 syn = "2"
 
 [profile.release]
+opt-level = 3
+lto = "thin"
+codegen-units = 1
 strip = true
 
 # The scenery's pixel loops (blurring a sky, baking the frosted plates) are optimised in debug

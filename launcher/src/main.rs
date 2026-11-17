@@ -1,4 +1,4 @@
-//! Horizon launcher: installs Horizon builds, prepares them from the player's own Minecraft,
+//! REa Launcher: installs Horizon builds, prepares them from the player's own Minecraft,
 //! and starts the client or a dedicated server.
 
 #![cfg_attr(target_os = "windows", windows_subsystem = "windows")]
@@ -489,6 +489,8 @@ struct Launcher {
     proxy_focus: FocusHandle,
     /// Opt-in data collection: the player's answer and Settings' section (`collection`).
     collection: collection::Collection,
+    /// Result of the optional old-launcher settings import shown in first-run welcome.
+    migration_message: Option<String>,
     /// Settings' "Connect an AI agent" (`agents_page`).
     agents: agents_page::AgentsUi,
     /// How many play Horizon now, while the server answers ("N playing now" on the Play page).
@@ -529,7 +531,7 @@ struct Launcher {
     /// Modrinth projects' icon URLs (`instance_mods.rs`).
     project_icons: instance_mods::ProjectIcons,
     play_pressed: Option<Instant>,
-    /// `horizon-launcher benchmark` started this window to measure it.
+    /// `rea-launcher benchmark` started this window to measure it.
     bench: Option<perf::Bench>,
     /// The Modpacks page: the imported packs (read when the page first opens), the one shown,
     /// the report's filter, and the pipeline step running now with its log.
@@ -629,8 +631,8 @@ fn page_after_startup(page: Page, data_folder_failed: bool) -> Page {
 fn menus() -> Vec<Menu> {
     vec![
         Menu {
-            name: "Horizon Launcher".into(),
-            items: vec![MenuItem::action(tr("Quit Horizon Launcher"), Quit)],
+            name: "REa Launcher".into(),
+            items: vec![MenuItem::action(tr("Quit REa Launcher"), Quit)],
             disabled: false,
         },
         Menu {
@@ -857,10 +859,10 @@ mod tests {
     #[test]
     fn the_app_menu_has_quit() {
         let menus = super::menus();
-        assert_eq!(menus[0].name, "Horizon Launcher");
+        assert_eq!(menus[0].name, "REa Launcher");
         assert!(matches!(
             &menus[0].items[0],
-            gpui::MenuItem::Action { name, .. } if name == "Quit Horizon Launcher"
+            gpui::MenuItem::Action { name, .. } if name == "Quit REa Launcher"
         ));
     }
 

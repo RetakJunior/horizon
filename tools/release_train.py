@@ -94,9 +94,10 @@ PLAYERS_FOOTER = ('<h1>Want to play? Download the <a href="https://playhorizon.d
 PLAYERS = (PLAYERS_FOOTER + '<p>The launcher installs this version and keeps it up to date. You need your own copy of '
            'Minecraft: Java Edition. The files below are what the launcher installs, and the dedicated server for '
            'people who host one.</p>')
-LAUNCHER_FOOTER = ("Your launcher updates itself. New here? On Linux take the .AppImage below, make it executable "
-                   "and run it; on Windows and macOS download the archive, extract it and run `horizon-launcher` "
-                   "(Horizon.app on macOS). Website: https://playhorizon.dev")
+LAUNCHER_FOOTER = ("Launcher self-updates are disabled. Install tagged builds from GitHub Releases; upstream-synced "
+                   "builds are available in Actions artifacts for 14 days. New here? On Linux take the .AppImage "
+                   "below, make it executable and run it; on Windows and macOS download the archive, extract it "
+                   "and run `rea-launcher` (REa Launcher.app on macOS).")
 DISCLAIMER = "Not an official Minecraft product. Not approved by or associated with Mojang or Microsoft."
 # An open issue with this label holds every game release (docs/release-flow.md). Only people who can triage the
 # repository can add it, and the issue's text is never read: its author could edit it afterwards.
@@ -434,7 +435,7 @@ def notes(kind, version, prs, issues, previous=None):
     if kind == "game":
         title = f"Horizon {version.removeprefix(GAME_PREFIX)}" + (f": {summary(new, fixed)}" if shown else "")
     else:
-        title = f"Horizon launcher {version.removeprefix(OLD_LAUNCHER_PREFIX).removeprefix(LAUNCHER_PREFIX)}"
+        title = f"REa Launcher {version.removeprefix(OLD_LAUNCHER_PREFIX).removeprefix(LAUNCHER_PREFIX)}"
     intro = line_intro(kind, version, previous)
     parts = [PLAYERS] if kind == "game" else []
     if intro:

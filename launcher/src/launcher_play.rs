@@ -19,7 +19,7 @@ impl Launcher {
         for home in homes {
             match backend::switch_from_auto(&home, api) {
                 Ok(changed) => switched |= changed,
-                Err(e) => eprintln!("Horizon launcher: could not switch to {label}: {e}"),
+                Err(e) => eprintln!("REa Launcher: could not switch to {label}: {e}"),
             }
         }
         switched.then_some(label)

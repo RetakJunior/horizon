@@ -103,7 +103,7 @@ impl Launcher {
                     )
                 ),
                 None if self.checked.is_some() && self.update_error.is_none() => {
-                    format!("{}  ·  {}", backend::VERSION, tr("up to date"))
+                    format!("{}  ·  {}", backend::VERSION, tr("self-updates disabled"))
                 }
                 None => backend::VERSION.to_string(),
             },
@@ -246,7 +246,7 @@ impl Launcher {
                     .child(self.while_playing_row(n + 3, cx))
                     .child(index_row(
                         n + 3,
-                        tr("Show the Horizon logo at startup"),
+                        tr("Show REa Launcher at startup"),
                         Some(plain("Shown for a moment while the version list loads.")),
                         Some(opening.into_any_element()),
                         &t,
@@ -651,8 +651,13 @@ impl Launcher {
             };
             let progress = sign_in_progress
                 .or_else(|| self.auth_progress.get(&uuid).map(|phase| phase.label()));
-            let busy = !is_offline && (self.auth_busy.contains_key(&uuid) || sign_in_progress.is_some());
-            let status = if is_offline { None } else { self.auth_status.get(&uuid) };
+            let busy =
+                !is_offline && (self.auth_busy.contains_key(&uuid) || sign_in_progress.is_some());
+            let status = if is_offline {
+                None
+            } else {
+                self.auth_status.get(&uuid)
+            };
             let needs_sign_in =
                 status.is_some_and(|s| s.state == account::session::State::SignInRequired);
             let refresh_id = uuid.clone();

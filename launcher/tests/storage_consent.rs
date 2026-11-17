@@ -5,7 +5,7 @@ use horizon_launcher::backend::Settings;
 fn revocation_survives_reloading_settings_and_preserves_limit() {
     let scratch = tempfile::tempdir().unwrap();
     // This integration test has its own process and a single test; no shared player home.
-    std::env::set_var("HORIZON_LAUNCHER_HOME", scratch.path());
+    std::env::set_var("REA_LAUNCHER_HOME", scratch.path());
     let mut settings = Settings {
         native_mods_allowed_at: Some(12345),
         cache_limit_gib: Some(50),

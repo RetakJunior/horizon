@@ -20,9 +20,9 @@ pub fn issues_url() -> String {
 pub const README_URL: &str = "https://github.com/horizon-rust/horizon/blob/main/launcher/README.md";
 /// The players' page on connecting an AI agent (the website's docs/agents.md).
 pub const AGENT_DOCS_URL: &str = "https://playhorizon.dev/docs/agents";
-/// This launcher's version: the release workflow sets `HORIZON_LAUNCHER_VERSION` from the
+/// This launcher's version: the release workflow sets `REA_LAUNCHER_VERSION` from the
 /// tag it builds (no version-bump commits); other builds say Cargo.toml's.
-pub const VERSION: &str = version_or(option_env!("HORIZON_LAUNCHER_VERSION"));
+pub const VERSION: &str = version_or(option_env!("REA_LAUNCHER_VERSION"));
 /// Launcher releases are tagged `launcher@X.Y.Z` from 0.2 on (docs/versioning.md), and Horizon's
 /// own `vX.Y.Z`. Before 0.2 they were `launcher-vX.Y.Z` and `vYYYY.MM.DD[.N]`: every 0.2 tag is
 /// newer than every one of those ([`release_order`]).
@@ -94,7 +94,7 @@ const fn platform_assets(os: &str, arch: &str) -> Option<(&'static str, &'static
 /// Both follow this launcher's own architecture. An x64 launcher on a Windows ARM64 PC (under
 /// emulation) keeps updating itself, installing games and building native mods as x64, so a player
 /// whose emulated setup works is never moved to an ARM64 build by an update. The ARM64 launcher is
-/// what `horizon-launcher-setup-arm64.exe` installs.
+/// what `rea-launcher-setup-arm64.exe` installs.
 const OWN_ASSETS: Option<(&str, &str)> =
     platform_assets(std::env::consts::OS, std::env::consts::ARCH);
 /// The game build this launcher installs, None where Horizon has none.
@@ -449,14 +449,14 @@ const fn game_fallback_for(os: &str, arch: &str) -> Option<&'static str> {
 /// one file. A launcher running from one updates by replacing that file ([`appimage_path`]), so it
 /// needs this archive rather than the platform's `.tar.gz`.
 #[cfg(all(target_os = "linux", target_arch = "x86_64"))]
-pub const LAUNCHER_APPIMAGE_ASSET: Option<&str> = Some("horizon-launcher-linux-x86_64.AppImage");
+pub const LAUNCHER_APPIMAGE_ASSET: Option<&str> = Some("rea-launcher-linux-x86_64.AppImage");
 #[cfg(not(all(target_os = "linux", target_arch = "x86_64")))]
 pub const LAUNCHER_APPIMAGE_ASSET: Option<&str> = None;
 
 const LAUNCHER_BINARY: &str = if cfg!(windows) {
-    "horizon-launcher.exe"
+    "rea-launcher.exe"
 } else {
-    "horizon-launcher"
+    "rea-launcher"
 };
 
 pub(crate) const CLIENT: &str = if cfg!(windows) {
@@ -470,7 +470,7 @@ pub(crate) const CLIENT: &str = if cfg!(windows) {
 pub(crate) fn agent(url: &str) -> ureq::Agent {
     crate::proxy::agent(
         ureq::AgentBuilder::new()
-            .user_agent(&format!("horizon-launcher/{VERSION}"))
+            .user_agent(&format!("rea-launcher/{VERSION}"))
             // A connection that goes quiet fails instead of waiting for ever.
             .timeout_connect(std::time::Duration::from_secs(15))
             .timeout_read(std::time::Duration::from_secs(60)),
@@ -534,13 +534,13 @@ pub fn launcher_version(tag: &str) -> Option<&str> {
         .filter(|v| v.starts_with(|c: char| c.is_ascii_digit()))
 }
 
-/// The tag this launcher was released as. launcher.yml gives it (`HORIZON_LAUNCHER_TAG`); a release
+/// The tag this launcher was released as. launcher.yml gives it (`REA_LAUNCHER_TAG`); a release
 /// built before it did gave only the version, of a `launcher-v` tag; a build from source is
 /// Cargo.toml's version on the 0.2 line.
 pub fn own_tag() -> String {
     own_tag_of(
-        option_env!("HORIZON_LAUNCHER_TAG"),
-        option_env!("HORIZON_LAUNCHER_VERSION"),
+        option_env!("REA_LAUNCHER_TAG"),
+        option_env!("REA_LAUNCHER_VERSION"),
     )
 }
 
@@ -699,6 +699,7 @@ pub(crate) fn parse_releases(
     out
 }
 
+#[allow(dead_code)]
 fn is_launcher_tag(tag: &str) -> bool {
     launcher_version(tag).is_some()
 }
@@ -756,14 +757,8 @@ fn game_releases_with(
     out
 }
 
-/// The launcher releases in `list` (the newest 100 releases). Game releases come out several times
-/// a day, so the newest launcher release can be older than all of those: then the newest
-/// `launcher@` and `launcher-v` tags are looked up one by one (a draft's tag is skipped: it has no
-/// public release).
-fn launcher_releases_in(list: &serde_json::Value) -> Vec<Release> {
-    launcher_releases_in_with(list, |url| crate::github::json_optional(&url))
-}
-
+/// Kept for the legacy release parser's unit coverage; REa Launcher does not check its own updates.
+#[allow(dead_code)]
 fn launcher_releases_in_with(
     list: &serde_json::Value,
     json: impl Fn(String) -> Result<Option<serde_json::Value>, String>,
@@ -798,6 +793,7 @@ fn launcher_releases_in_with(
 }
 
 /// The launcher tags in GitHub's matching-refs answer, newest first.
+#[allow(dead_code)]
 fn newest_launcher_tags(refs: &serde_json::Value) -> Vec<String> {
     let mut tags: Vec<String> = refs
         .as_array()
@@ -895,9 +891,9 @@ pub fn links() -> Links {
         .map_or_else(Links::default, |text| Links::parse(&text))
 }
 
-/// The launcher's data folder; `HORIZON_LAUNCHER_HOME` overrides it (for tests and scripts).
+/// The launcher's data folder; `REA_LAUNCHER_HOME` overrides it (for tests and scripts).
 pub fn data_dir() -> PathBuf {
-    if let Some(home) = std::env::var_os("HORIZON_LAUNCHER_HOME").filter(|h| !h.is_empty()) {
+    if let Some(home) = std::env::var_os("REA_LAUNCHER_HOME").filter(|h| !h.is_empty()) {
         return PathBuf::from(home);
     }
     if cfg!(test) {
@@ -910,7 +906,7 @@ pub fn data_dir() -> PathBuf {
     }
     dirs::data_dir()
         .unwrap_or_else(std::env::temp_dir)
-        .join("horizon-launcher")
+        .join("rea-launcher")
 }
 
 /// A canonical path without Windows' verbatim prefix: `canonicalize` gives `\\?\C:\...` there,
@@ -942,7 +938,7 @@ fn tool_safe(path: &Path) -> bool {
 /// path isn't [`tool_safe`], [`windows_build_dir`] names the same folder a way MinGW-w64 can open.
 pub fn build_dir() -> PathBuf {
     // Tests keep it inside their scratch launcher folder (`data_dir`).
-    if !cfg!(test) && std::env::var_os("HORIZON_LAUNCHER_HOME").is_none_or(|p| p.is_empty()) {
+    if !cfg!(test) && std::env::var_os("REA_LAUNCHER_HOME").is_none_or(|p| p.is_empty()) {
         // A location that does not open stands in as the default folders, as
         // `data_location::startup` makes it for the window: never a panic here.
         if let Ok(Some(roots)) = crate::data_location::configured_roots() {
@@ -989,7 +985,7 @@ fn ascii_build_dir(real: &Path, program_data: Option<PathBuf>) -> PathBuf {
         .unwrap_or_else(|| PathBuf::from(r"C:\ProgramData"));
     let key = Sha256::digest(real.as_os_str().as_encoded_bytes());
     let key: String = key[..4].iter().map(|b| format!("{b:02x}")).collect();
-    public.join(format!("horizon-launcher-{key}"))
+    public.join(format!("rea-launcher-{key}"))
 }
 
 /// `GetShortPathNameW`: `path`'s short (8.3) name, or None on error. A folder with no short
@@ -2524,11 +2520,11 @@ pub fn prepare_in_process(options: &prepare::Options, log: &dyn Fn(String)) -> R
     .map(|_| ())
 }
 
-/// Where the game keeps saves and options.txt: `HORIZON_HOME`, else `horizon` in the platform's
-/// data folder (~/.local/share/horizon on Linux, as the release folders' horizon.sh uses). It is
+/// Where the game keeps saves and options.txt: `REA_HOME`, else `rea-launcher` in the platform's
+/// data folder (~/.local/share/rea-launcher on Linux). It is
 /// never inside a version folder, so installing, updating or removing a version keeps the saves.
 pub fn game_home() -> PathBuf {
-    if let Some(home) = std::env::var_os("HORIZON_HOME").filter(|h| !h.is_empty()) {
+    if let Some(home) = std::env::var_os("REA_HOME").filter(|h| !h.is_empty()) {
         return PathBuf::from(home);
     }
     if cfg!(test) {
@@ -2541,7 +2537,7 @@ pub fn game_home() -> PathBuf {
     }
     dirs::data_dir()
         .unwrap_or_else(std::env::temp_dir)
-        .join("horizon")
+        .join("rea-launcher")
 }
 
 /// Whether No AI is on: every AI feature hidden and off (`horizon_platform::no_ai`, kept in the
@@ -2805,7 +2801,13 @@ pub fn client_command(tag: &str) -> Command {
     strip_launcher_render_env(&mut cmd);
     crate::telemetry::ping_only_if_allowed(&mut cmd, !Settings::load().ping_off);
     cmd.current_dir(&home)
+        // Horizon game builds still read their game folder from HORIZON_HOME. REA_HOME is the
+        // launcher-facing override; this child-process bridge keeps the game compatible.
         .env("HORIZON_HOME", &home)
+        // horizon-ctl is still built from the upstream game workspace and looks for launcher
+        // installs through the old variable. Keep that child-only bridge until the game side
+        // grows a REA-aware lookup.
+        .env("HORIZON_LAUNCHER_HOME", data_dir())
         .env_remove("HORIZON_ACCOUNT_SESSIONS")
         .arg("--resources")
         .arg(resources(tag));
@@ -2839,9 +2841,9 @@ pub(crate) fn client_program(tag: &str) -> PathBuf {
 
 pub fn server_command(tag: &str, folder: &Path) -> Command {
     let mut cmd = Command::new(version_dir(tag).join(CLIENT));
-    if crate::developer_install::uses_developer(tag) {
-        cmd.env("HORIZON_TELEMETRY_URL", "off");
-    }
+    cmd.env("HORIZON_TELEMETRY_URL", "off")
+        .env("HORIZON_NO_HEARTBEAT", "1")
+        .env("HORIZON_LAUNCHER_HOME", data_dir());
     crate::run_leases::mark(&mut cmd, &version_dir(tag));
     cmd.current_dir(folder)
         .arg("--resources")
@@ -2886,7 +2888,7 @@ pub fn no_version_installed() -> String {
     format!(
         "{} {}",
         tr("No version is installed yet."),
-        tr("Run `horizon-launcher install latest` to get one.")
+        tr("Run `rea-launcher install latest` to get one.")
     )
 }
 
@@ -3061,7 +3063,7 @@ pub fn need_prepared(tag: &str) -> Result<(), String> {
         Ok(())
     } else {
         Err(format!(
-            "{tag} is not prepared yet. Prepare it first: `horizon-launcher prepare --version {tag}` \
+            "{tag} is not prepared yet. Prepare it first: `rea-launcher prepare --version {tag}` \
              uses your own Minecraft {v}, or downloads it from Mojang for the signed-in account \
              that owns it.",
             v = game_version(tag)
@@ -3083,7 +3085,7 @@ pub fn client(tag: &str) -> Result<Command, String> {
 }
 
 /// What the command line adds to a refusal to play for want of an account.
-pub const SIGN_IN_HINT: &str = "Sign in with `horizon-launcher account sign-in`.";
+pub const SIGN_IN_HINT: &str = "Sign in with `rea-launcher account sign-in`.";
 
 /// Start the game straight into a friend's world: `--server friend:CODE`.
 pub fn join_friend(cmd: &mut Command, code: &str) -> Result<(), String> {
@@ -3215,12 +3217,13 @@ pub fn horizon_update(releases: &[Release], installed: &[String]) -> Option<Rele
     newer.then(|| newest.clone())
 }
 
-/// The newest launcher release with an archive for this platform, if newer than this launcher
-/// ([`own_tag`]: a launcher from before 0.2 takes any `launcher@` release).
+/// REa Launcher updates are installed outside the app; it never checks launcher releases.
 pub fn launcher_update(releases: &[Release]) -> Option<Release> {
-    launcher_update_from(releases, &own_tag())
+    let _ = releases;
+    None
 }
 
+#[cfg(test)]
 fn launcher_update_from(releases: &[Release], own: &str) -> Option<Release> {
     releases
         .iter()
@@ -3229,19 +3232,17 @@ fn launcher_update_from(releases: &[Release], own: &str) -> Option<Release> {
         .cloned()
 }
 
-/// Load the game's release list and both update kinds from the same GitHub response.
-/// Publish the game releases before any fallback lookups for older launcher tags, so those
-/// lookups cannot hold up the release pages or opening animation. A list error reaches both.
+/// Load the game's release list and update from one GitHub response. Launcher releases are not
+/// checked by REa Launcher.
 pub fn releases_and_updates(
     on_releases: impl FnOnce(Result<Vec<Release>, String>),
 ) -> Result<Updates, String> {
-    releases_and_updates_with(release_list, installed, launcher_releases_in, on_releases)
+    releases_and_updates_with(release_list, installed, on_releases)
 }
 
 fn releases_and_updates_with(
     load: impl FnOnce() -> Result<serde_json::Value, String>,
     installed: impl FnOnce() -> Vec<String>,
-    launchers: impl FnOnce(&serde_json::Value) -> Vec<Release>,
     on_releases: impl FnOnce(Result<Vec<Release>, String>),
 ) -> Result<Updates, String> {
     let list = match load() {
@@ -3258,7 +3259,7 @@ fn releases_and_updates_with(
     on_releases(Ok(releases));
     Ok(Updates {
         horizon,
-        launcher: launcher_update(&launchers(&list)),
+        launcher: None,
     })
 }
 
@@ -3403,15 +3404,15 @@ fn launcher_asset_running_from(appimage: bool) -> Option<&'static str> {
     }
 }
 
-/// Development builds and `HORIZON_LAUNCHER_NO_SELF_UPDATE` never replace themselves.
+/// This REa build deliberately does not replace its launcher binary in place.
 pub fn self_update_allowed() -> bool {
-    !cfg!(debug_assertions) && std::env::var_os("HORIZON_LAUNCHER_NO_SELF_UPDATE").is_none()
+    false
 }
 
-/// The version in `horizon-launcher --version`'s output (`horizon-launcher 0.1.5`).
+/// The version in `rea-launcher --version`'s output (`rea-launcher 0.1.5`).
 fn parse_version_output(out: &str) -> Option<&str> {
     out.trim()
-        .strip_prefix("horizon-launcher ")
+        .strip_prefix("rea-launcher ")
         .map(str::trim)
         .filter(|v| !v.is_empty())
 }
@@ -3525,8 +3526,8 @@ pub fn remove_replaced_binaries() {
     });
 }
 
-/// The app bundle the launcher runs from (`…/Horizon.app` for `…/Horizon.app/Contents/MacOS/
-/// horizon-launcher`), or None for a bare binary, as launchers before the .app shipped.
+/// The app bundle the launcher runs from (`…/REa Launcher.app` for `…/REa Launcher.app/Contents/MacOS/
+/// rea-launcher`), or None for a bare binary, as launchers before the .app shipped.
 pub fn app_bundle(exe: &Path) -> Option<&Path> {
     let macos = exe.parent()?;
     let contents = macos.parent()?;
@@ -3858,9 +3859,9 @@ fn fill_stage(
     }
     let unpacked = stage.join(UNPACKED);
     unpack(&archive, url, &unpacked)?;
-    // A launcher inside Horizon.app replaces the whole bundle (its Info.plist, icon and
+    // A launcher inside REa Launcher.app replaces the whole bundle (its Info.plist, icon and
     // signature belong with the binary); a bare binary, as older launchers are, only the binary,
-    // which the macOS archive also holds (Horizon.app/Contents/MacOS/horizon-launcher).
+    // which the macOS archive also holds (REa Launcher.app/Contents/MacOS/rea-launcher).
     if app_bundle(exe_path()).is_some() {
         if let Some(new) = find_app(&unpacked) {
             return staged(new);
@@ -4433,8 +4434,8 @@ mod tests {
                     "backend::tests::failed_removal_is_incomplete_and_can_be_retried"
                 ])
                 .env("REMOVE_TEST_ROOT", root.path())
-                .env("HORIZON_LAUNCHER_HOME", root.path())
-                .env("HORIZON_HOME", root.path().join("home"))
+                .env("REA_LAUNCHER_HOME", root.path())
+                .env("REA_HOME", root.path().join("home"))
                 .env("XDG_DATA_HOME", root.path().join("xdg-data"))
                 .env("XDG_CONFIG_HOME", root.path().join("xdg-config"))
                 .env("HORIZON_LAUNCHER_TRASH", root.path().join("trash"))
@@ -4483,8 +4484,8 @@ mod tests {
     fn a_canonical_windows_path_loses_only_a_drives_verbatim_prefix() {
         let plain = |p: &str| plain(PathBuf::from(p));
         assert_eq!(
-            plain(r"\\?\C:\Users\me\AppData\Roaming\horizon-launcher\native"),
-            PathBuf::from(r"C:\Users\me\AppData\Roaming\horizon-launcher\native")
+            plain(r"\\?\C:\Users\me\AppData\Roaming\rea-launcher\native"),
+            PathBuf::from(r"C:\Users\me\AppData\Roaming\rea-launcher\native")
         );
         // A share has no drive form to fall back to; other paths have no prefix.
         assert_eq!(
@@ -4492,8 +4493,8 @@ mod tests {
             PathBuf::from(r"\\?\UNC\server\share\native")
         );
         assert_eq!(
-            plain("/home/me/.local/share/horizon-launcher/native"),
-            PathBuf::from("/home/me/.local/share/horizon-launcher/native")
+            plain("/home/me/.local/share/rea-launcher/native"),
+            PathBuf::from("/home/me/.local/share/rea-launcher/native")
         );
     }
 
@@ -4503,14 +4504,14 @@ mod tests {
     #[test]
     fn the_build_dir_is_a_path_the_tools_can_read() {
         assert!(ascii(Path::new(
-            r"C:\Users\me\AppData\Roaming\horizon-launcher"
+            r"C:\Users\me\AppData\Roaming\rea-launcher"
         )));
         assert!(!ascii(Path::new(
-            r"C:\Users\Кириченко Павло\AppData\Roaming\horizon-launcher"
+            r"C:\Users\Кириченко Павло\AppData\Roaming\rea-launcher"
         )));
-        assert!(!ascii(Path::new("/høme/me/horizon-launcher")));
+        assert!(!ascii(Path::new("/høme/me/rea-launcher")));
         // A space splits windres' include folders, which matters on Windows only.
-        let spaced = Path::new(r"C:\Users\Jane Doe\AppData\Roaming\horizon-launcher");
+        let spaced = Path::new(r"C:\Users\Jane Doe\AppData\Roaming\rea-launcher");
         assert!(ascii(spaced));
         assert_eq!(tool_safe(spaced), !cfg!(windows));
         let built = build_dir();
@@ -4533,15 +4534,15 @@ mod tests {
     /// which rustc resolves back to the Cyrillic one), its own for each data folder.
     #[test]
     fn a_cyrillic_data_folder_builds_in_an_ascii_folder_of_its_own() {
-        let pavlo = Path::new(r"C:\Users\Кириченко Павло\AppData\Roaming\horizon-launcher");
-        let other = Path::new(r"C:\Users\Олена\AppData\Roaming\horizon-launcher");
+        let pavlo = Path::new(r"C:\Users\Кириченко Павло\AppData\Roaming\rea-launcher");
+        let other = Path::new(r"C:\Users\Олена\AppData\Roaming\rea-launcher");
         let public = PathBuf::from(if cfg!(windows) { r"D:\Data" } else { "/data" });
         let dir = ascii_build_dir(pavlo, Some(public.clone()));
         assert!(ascii(&dir), "{}", dir.display());
         assert_eq!(dir.parent(), Some(public.as_path()));
         let name = dir.file_name().unwrap().to_str().unwrap();
         assert!(
-            name.starts_with("horizon-launcher-") && name.len() == 25,
+            name.starts_with("rea-launcher-") && name.len() == "rea-launcher-".len() + 8,
             "{name}"
         );
         assert_eq!(dir, ascii_build_dir(pavlo, Some(public.clone())), "stable");
@@ -4753,7 +4754,7 @@ pub fn {f}("
                     "--nocapture"
                 ])
                 .env(ACTOR, "1")
-                .env("HORIZON_LAUNCHER_HOME", home.path())
+                .env("REA_LAUNCHER_HOME", home.path())
                 .status()
                 .unwrap()
                 .success());
@@ -4809,27 +4810,21 @@ pub fn {f}("
     fn each_mac_picks_the_build_for_its_processor() {
         assert_eq!(
             platform_assets("macos", "aarch64"),
-            Some((
-                "horizon-macos-arm64.zip",
-                "horizon-launcher-macos-arm64.zip"
-            ))
+            Some(("horizon-macos-arm64.zip", "rea-launcher-macos-arm64.zip"))
         );
         assert_eq!(
             platform_assets("macos", "x86_64"),
-            Some(("horizon-macos-x64.zip", "horizon-launcher-macos-x64.zip"))
+            Some(("horizon-macos-x64.zip", "rea-launcher-macos-x64.zip"))
         );
         assert_eq!(
             platform_assets("windows", "x86_64"),
-            Some((
-                "horizon-windows-x64.zip",
-                "horizon-launcher-windows-x64.zip"
-            ))
+            Some(("horizon-windows-x64.zip", "rea-launcher-windows-x64.zip"))
         );
         assert_eq!(
             platform_assets("windows", "aarch64"),
             Some((
                 "horizon-windows-arm64.zip",
-                "horizon-launcher-windows-arm64.zip"
+                "rea-launcher-windows-arm64.zip"
             ))
         );
         assert_eq!(platform_assets("linux", "aarch64"), None);
@@ -5151,8 +5146,8 @@ pub fn {f}("
     #[test]
     fn an_arm64_launcher_skips_a_release_without_its_zip() {
         let (arm, x64) = (
-            "horizon-launcher-windows-arm64.zip",
-            "horizon-launcher-windows-x64.zip",
+            "rea-launcher-windows-arm64.zip",
+            "rea-launcher-windows-x64.zip",
         );
         let asset = |name: &str| serde_json::json!({"name": name, "browser_download_url": format!("https://example.test/{name}"), "size": 1});
         let list = serde_json::json!([
@@ -5329,7 +5324,7 @@ pub fn {f}("
         assert_eq!(launcher_version("launcher-vx"), None);
         let list = serde_json::json!([
             {"tag_name": "v2026.10.12", "assets": [{"name": "horizon-linux-x86_64.tar.gz", "browser_download_url": "u", "size": 1}]},
-            {"tag_name": "launcher-v9.0.0", "assets": [{"name": "horizon-launcher-linux-x86_64.tar.gz", "browser_download_url": "u", "size": 1}]},
+            {"tag_name": "launcher-v9.0.0", "assets": [{"name": "rea-launcher-linux-x86_64.tar.gz", "browser_download_url": "u", "size": 1}]},
             {"tag_name": "v2026.10.13", "assets": []},
             {"tag_name": "launcher-v0.0.1", "draft": true, "assets": []},
         ]);
@@ -5482,9 +5477,9 @@ pub fn {f}("
     }
 
     #[test]
-    fn the_accent_is_violet_unless_picked_and_an_unknown_one_keeps_the_rest() {
+    fn the_accent_defaults_to_rea_cyan_and_an_unknown_one_keeps_the_rest() {
         use crate::themes::Accent;
-        assert_eq!(Settings::parse("{}").accent, Accent::VIOLET);
+        assert_eq!(Settings::parse("{}").accent, Accent::from_rgb(0x00e5ff));
         let teal =
             Settings::parse(r#"{"accent": "teal", "background": "background-0123456789ab.png"}"#);
         assert_eq!(
@@ -5494,7 +5489,7 @@ pub fn {f}("
         let future = Settings::parse(r#"{"accent": "plaid", "game_args": "--x"}"#);
         assert_eq!(
             (future.accent, future.game_args.as_str()),
-            (Accent::VIOLET, "--x")
+            (Accent::from_rgb(0x00e5ff), "--x")
         );
     }
 
@@ -5566,7 +5561,7 @@ pub fn {f}("
         assert_eq!(version_or(None), env!("CARGO_PKG_VERSION"));
         assert_eq!(
             VERSION,
-            option_env!("HORIZON_LAUNCHER_VERSION")
+            option_env!("REA_LAUNCHER_VERSION")
                 .filter(|v| !v.is_empty())
                 .unwrap_or(env!("CARGO_PKG_VERSION"))
         );
@@ -5584,7 +5579,7 @@ pub fn {f}("
         assert!(launcher_update(&[r(own_tag())]).is_none());
         assert_eq!(launcher_version(&own_tag()), Some(VERSION));
         assert_eq!(
-            parse_version_output(&format!("horizon-launcher {VERSION}\n")),
+            parse_version_output(&format!("rea-launcher {VERSION}\n")),
             Some(VERSION)
         );
     }
@@ -5700,7 +5695,7 @@ pub fn {f}("
         #[cfg(all(target_os = "linux", target_arch = "x86_64"))]
         assert_eq!(
             launcher_asset_running_from(true),
-            Some("horizon-launcher-linux-x86_64.AppImage")
+            Some("rea-launcher-linux-x86_64.AppImage")
         );
     }
 
@@ -5712,9 +5707,7 @@ pub fn {f}("
         let temp = Path::new("/tmp/t");
         let inside = |dir: &str| in_temp_folder(Path::new(dir), temp);
         assert!(inside("/tmp/t"));
-        assert!(inside(
-            "/tmp/t/Temp12_horizon-launcher-windows-x64.zip/inner"
-        ));
+        assert!(inside("/tmp/t/Temp12_rea-launcher-windows-x64.zip/inner"));
         assert!(inside("/tmp/t/7zO8A1B2C3D"));
         assert!(!inside("/tmp/tools"));
         assert!(!inside("/home/me/Temp1_horizon.zip"));
@@ -5805,8 +5798,8 @@ pub fn {f}("
         fs::write(theirs.join("download.zip"), b"their download").unwrap();
         fs::write(mine.join("download.zip"), b"mine").unwrap();
 
-        remove_stage(&work, &work.join("unpacked").join("horizon-launcher"));
-        remove_stage(&work, &mine.join("..").join("horizon-launcher"));
+        remove_stage(&work, &work.join("unpacked").join("rea-launcher"));
+        remove_stage(&work, &mine.join("..").join("rea-launcher"));
         remove_stage(&work, &work);
         assert!(mine.exists() && theirs.exists());
 
@@ -5888,7 +5881,7 @@ pub fn {f}("
     fn only_an_appimage_file_counts() {
         use std::ffi::OsStr;
         let mount = OsStr::new("/tmp/.mount_Horizon123");
-        let exe = Path::new("/tmp/.mount_Horizon123/usr/bin/horizon-launcher");
+        let exe = Path::new("/tmp/.mount_Horizon123/usr/bin/rea-launcher");
         assert_eq!(appimage_path_in(None, Some(mount), exe), None);
         assert_eq!(
             appimage_path_in(Some(OsStr::new("Horizon.AppImage")), Some(mount), exe),
@@ -5910,7 +5903,7 @@ pub fn {f}("
             Some(file.clone())
         );
         // Inherited from another AppImage: this launcher is installed elsewhere.
-        let elsewhere = Path::new("/home/a/.local/bin/horizon-launcher");
+        let elsewhere = Path::new("/home/a/.local/bin/rea-launcher");
         assert_eq!(
             appimage_path_in(Some(file.as_os_str()), Some(mount), elsewhere),
             None
@@ -6063,7 +6056,7 @@ pub fn {f}("
         );
         assert!(horizon_update(&releases, &["v2026.10.13".into()]).is_none());
         assert!(launcher_update(&[r("launcher-v0.0.1")]).is_none());
-        assert!(launcher_update(&[r("launcher@99.0.0")]).is_some());
+        assert!(launcher_update(&[r("launcher@99.0.0")]).is_none());
         assert!(launcher_update_from(&[r("launcher-v99.0.0")], "launcher-v0.16.0").is_some());
         let installed = ["v2026.10.12".to_string(), "v2026.10.1".to_string()];
         assert!(select_after_update(Some("v2026.10.12"), &installed));
@@ -6233,8 +6226,7 @@ pub fn {f}("
     #[test]
     fn a_drawn_page_asks_the_disk_once_and_the_launch_check_asks_again() {
         use std::time::{Duration, Instant};
-        let dir =
-            std::env::temp_dir().join(format!("horizon-launcher-cached-{}", std::process::id()));
+        let dir = std::env::temp_dir().join(format!("rea-launcher-cached-{}", std::process::id()));
         let _ = fs::remove_dir_all(&dir);
         fs::create_dir_all(&dir).unwrap();
         fs::write(dir.join(RESOURCES_MANIFEST), "{}").unwrap();
@@ -6302,8 +6294,7 @@ pub fn {f}("
 
     #[test]
     fn a_prepared_folder_with_an_empty_table_is_not_prepared() {
-        let dir =
-            std::env::temp_dir().join(format!("horizon-launcher-empty-{}", std::process::id()));
+        let dir = std::env::temp_dir().join(format!("rea-launcher-empty-{}", std::process::id()));
         let _ = fs::remove_dir_all(&dir);
         fs::create_dir_all(&dir).unwrap();
         assert!(!prepared_at(&dir), "no manifest is not prepared");
@@ -6328,7 +6319,7 @@ pub fn {f}("
     fn a_prepared_version_gets_a_data_file_that_holds_its_files() {
         use horizon_platform::prepared_files::FILE_NAME;
         let resources =
-            std::env::temp_dir().join(format!("horizon-launcher-data-file-{}", std::process::id()));
+            std::env::temp_dir().join(format!("rea-launcher-data-file-{}", std::process::id()));
         let _ = fs::remove_dir_all(&resources);
         let recipe = resources.join("data/minecraft/recipe/stick.json");
         fs::create_dir_all(recipe.parent().unwrap()).unwrap();
@@ -6354,7 +6345,7 @@ pub fn {f}("
     #[test]
     fn a_new_version_reuses_resources_prepared_by_a_compatible_one() {
         let versions =
-            std::env::temp_dir().join(format!("horizon-launcher-test-{}", std::process::id()));
+            std::env::temp_dir().join(format!("rea-launcher-test-{}", std::process::id()));
         let _ = fs::remove_dir_all(&versions);
         let oracle = "mods/horizon/src/test/java/dev/horizonlab/parity/VanillaHeightmapOracle.java";
         let camera = "mods/horizon/src/test/java/dev/horizonlab/parity/VanillaCameraOracle.java";
@@ -6469,10 +6460,8 @@ pub fn {f}("
 
     #[test]
     fn prepared_resources_follow_the_preparers_output_version() {
-        let versions = std::env::temp_dir().join(format!(
-            "horizon-launcher-output-test-{}",
-            std::process::id()
-        ));
+        let versions =
+            std::env::temp_dir().join(format!("rea-launcher-output-test-{}", std::process::id()));
         let _ = fs::remove_dir_all(&versions);
         let write = |tag: &str, path: &str, text: &str| {
             let path = versions.join(tag).join(path);
@@ -6565,10 +6554,8 @@ pub fn {f}("
 
     #[test]
     fn prepared_versions_get_the_run_time_reports_without_preparing_again() {
-        let versions = std::env::temp_dir().join(format!(
-            "horizon-launcher-reports-test-{}",
-            std::process::id()
-        ));
+        let versions =
+            std::env::temp_dir().join(format!("rea-launcher-reports-test-{}", std::process::id()));
         let _ = fs::remove_dir_all(&versions);
         let write = |tag: &str, path: &str, text: &str| {
             let path = versions.join(tag).join(path);
@@ -6624,10 +6611,8 @@ pub fn {f}("
 
     #[test]
     fn prepared_versions_get_what_the_asset_store_adds_without_preparing_again() {
-        let dir = std::env::temp_dir().join(format!(
-            "horizon-launcher-packs-test-{}",
-            std::process::id()
-        ));
+        let dir =
+            std::env::temp_dir().join(format!("rea-launcher-packs-test-{}", std::process::id()));
         let _ = fs::remove_dir_all(&dir);
         let (versions, store, empty) = (dir.join("versions"), dir.join("store"), dir.join("none"));
         let write = |path: PathBuf, data: &[u8]| {
@@ -6798,20 +6783,20 @@ pub fn {f}("
 
     #[test]
     fn finds_the_app_bundle_around_the_binary() {
-        let exe = Path::new("/Applications/Horizon.app/Contents/MacOS/horizon-launcher");
+        let exe = Path::new("/Applications/REa Launcher.app/Contents/MacOS/rea-launcher");
         assert_eq!(
             app_bundle(exe),
-            Some(Path::new("/Applications/Horizon.app"))
+            Some(Path::new("/Applications/REa Launcher.app"))
         );
-        assert_eq!(app_bundle(Path::new("/Users/me/horizon-launcher")), None);
+        assert_eq!(app_bundle(Path::new("/Users/me/rea-launcher")), None);
         assert_eq!(
-            app_bundle(Path::new("/x/Contents/MacOS/horizon-launcher")),
+            app_bundle(Path::new("/x/Contents/MacOS/rea-launcher")),
             None
         );
         let work = std::env::temp_dir().join(format!("horizon-find-app-{}", std::process::id()));
         let _ = fs::remove_dir_all(&work);
-        fs::create_dir_all(work.join("dist/Horizon.app/Contents/MacOS")).unwrap();
-        assert_eq!(find_app(&work), Some(work.join("dist/Horizon.app")));
+        fs::create_dir_all(work.join("dist/REa Launcher.app/Contents/MacOS")).unwrap();
+        assert_eq!(find_app(&work), Some(work.join("dist/REa Launcher.app")));
         let _ = fs::remove_dir_all(&work);
     }
 
@@ -6824,17 +6809,17 @@ pub fn {f}("
         let work = std::env::temp_dir().join(format!("horizon-bundle-{}", std::process::id()));
         let _ = fs::remove_dir_all(&work);
         let make = |dir: &Path, version: &str| {
-            let app = dir.join("Horizon.app");
+            let app = dir.join("REa Launcher.app");
             fs::create_dir_all(app.join("Contents/MacOS")).unwrap();
             fs::create_dir_all(app.join("Contents/Resources")).unwrap();
-            let bin = app.join("Contents/MacOS/horizon-launcher");
+            let bin = app.join("Contents/MacOS/rea-launcher");
             fs::copy("/usr/bin/true", &bin).unwrap();
             fs::set_permissions(&bin, fs::Permissions::from_mode(0o755)).unwrap();
             fs::write(app.join("Contents/Resources/version"), version).unwrap();
             fs::write(
                 app.join("Contents/Info.plist"),
                 "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<plist version=\"1.0\"><dict>\
-                 <key>CFBundleExecutable</key><string>horizon-launcher</string>\
+                 <key>CFBundleExecutable</key><string>rea-launcher</string>\
                  <key>CFBundleIdentifier</key><string>dev.horizon.test</string>\
                  <key>CFBundlePackageType</key><string>APPL</string></dict></plist>\n",
             )
@@ -6862,7 +6847,7 @@ pub fn {f}("
         replace_bundle(&new, &installed).unwrap();
         let version = fs::read_to_string(installed.join("Contents/Resources/version")).unwrap();
         assert_eq!(version, "2.0.0");
-        let bin = installed.join("Contents/MacOS/horizon-launcher");
+        let bin = installed.join("Contents/MacOS/rea-launcher");
         assert!(
             Command::new(&bin).status().unwrap().success(),
             "still executable"
@@ -6880,7 +6865,7 @@ pub fn {f}("
             .collect();
         assert_eq!(
             left,
-            ["Horizon.app"],
+            ["REa Launcher.app"],
             "nothing staged or moved aside is left"
         );
 
@@ -6897,10 +6882,7 @@ pub fn {f}("
 
     #[test]
     fn launcher_versions_read_from_the_binary() {
-        assert_eq!(
-            parse_version_output("horizon-launcher 0.1.5\n"),
-            Some("0.1.5")
-        );
+        assert_eq!(parse_version_output("rea-launcher 0.1.5\n"), Some("0.1.5"));
         assert_eq!(parse_version_output("something else"), None);
         assert_eq!(parse_version_output(""), None);
         // This test binary is not a launcher: no version, so an update goes ahead.
@@ -6909,7 +6891,7 @@ pub fn {f}("
             None
         );
         assert_eq!(
-            installed_launcher_version(Path::new("/nonexistent/horizon-launcher")),
+            installed_launcher_version(Path::new("/nonexistent/rea-launcher")),
             None
         );
     }
@@ -6920,15 +6902,16 @@ pub fn {f}("
     #[test]
     fn a_replaced_binary_is_replaced_again_at_its_path() {
         use std::os::unix::fs::PermissionsExt;
-        let dir =
-            std::env::temp_dir().join(format!("horizon-launcher-replace-{}", std::process::id()));
+        let dir = std::env::temp_dir().join(format!("rea-launcher-replace-{}", std::process::id()));
         let _ = fs::remove_dir_all(&dir);
         fs::create_dir_all(&dir).unwrap();
-        let exe = dir.join("horizon-launcher");
+        let exe = dir.join("rea-launcher");
         fs::write(&exe, "old").unwrap();
         // Another update swaps the file under the running launcher.
-        fs::write(dir.join("other"), "other update").unwrap();
-        fs::rename(dir.join("other"), &exe).unwrap();
+        let other = dir.join("other");
+        fs::write(&other, "other update").unwrap();
+        fs::set_permissions(&other, fs::Permissions::from_mode(0o644)).unwrap();
+        fs::rename(&other, &exe).unwrap();
         fs::write(dir.join("new"), "new").unwrap();
         replace_binary(&dir.join("new"), &exe).unwrap();
         assert_eq!(fs::read_to_string(&exe).unwrap(), "new");
@@ -6952,7 +6935,7 @@ pub fn {f}("
             .map(|e| e.file_name().to_string_lossy().into_owned())
             .collect();
         names.sort();
-        assert_eq!(names, ["horizon-launcher", "new"]);
+        assert_eq!(names, ["new", "rea-launcher"]);
         let _ = fs::remove_dir_all(&dir);
     }
 
@@ -7056,8 +7039,7 @@ pub fn {f}("
 
     #[test]
     fn crash_reports_are_found_and_summarised() {
-        let dir =
-            std::env::temp_dir().join(format!("horizon-launcher-crash-{}", std::process::id()));
+        let dir = std::env::temp_dir().join(format!("rea-launcher-crash-{}", std::process::id()));
         let _ = fs::remove_dir_all(&dir);
         let start = std::time::SystemTime::now() - std::time::Duration::from_secs(2);
         assert!(crash_report_in_since(&dir, start).is_none());

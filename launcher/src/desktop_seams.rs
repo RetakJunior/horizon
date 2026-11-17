@@ -6,8 +6,8 @@
 //! - `HORIZON_LAUNCHER_CLIPBOARD=<file>`: what would be copied is written to that file instead
 //!   (text as UTF-8, a picture as its PNG or JPEG bytes).
 //!
-//! Test runs point both into their scratch folders, beside `HORIZON_HOME` and
-//! `HORIZON_LAUNCHER_HOME`, and `HORIZON_LAUNCHER_DESKTOP` too (`shortcut`: where desktop
+//! Test runs point both into their scratch folders, beside `REA_HOME` and
+//! `REA_LAUNCHER_HOME`, and `HORIZON_LAUNCHER_DESKTOP` too (`shortcut`: where desktop
 //! shortcuts go).
 use std::path::{Path, PathBuf};
 

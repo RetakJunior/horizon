@@ -34,7 +34,7 @@ fn eligible(base: &str, directory: &std::path::Path, native_revision: Option<&st
 }
 
 pub const REBUILD: &str = "This game cannot enforce offline developer single-player. Rebuild and reinstall the developer game and its native mods.";
-const START_FAILED: &str = "The game failed to start while checking support for offline developer play. Repeat your horizon-launcher developer-install command, rebuild this build’s native mods with native-build, then try Play again. If it still fails, report this message on the Horizon Discord (linked in the launcher).\nDetails: {reason}";
+const START_FAILED: &str = "The game failed to start while checking support for offline developer play. Repeat your rea-launcher developer-install command, rebuild this build’s native mods with native-build, then try Play again. If it still fails, report this message on the Horizon Discord (linked in the launcher).\nDetails: {reason}";
 pub fn require_capability(tag: &str) -> Result<(), String> {
     let program = crate::backend::client_program(tag);
     let output = Command::new(&program)
@@ -180,8 +180,8 @@ mod tests {
             let mut child = Command::new(std::env::current_exe().unwrap());
             child.args(["--exact", "developer_offline::tests::account_gate_is_preserved_without_opt_in_and_for_signed_lineage", "--nocapture"])
                 .env("OFFLINE_GATE_TEST_TAG", tag)
-                .env("HORIZON_LAUNCHER_HOME", root.path())
-                .env("HORIZON_HOME", root.path().join("game"))
+                .env("REA_LAUNCHER_HOME", root.path())
+                .env("REA_HOME", root.path().join("game"))
                 .env("XDG_CONFIG_HOME", root.path().join("config"))
                 .env("XDG_DATA_HOME", root.path().join("data"));
             if let Some(value) = opt_in {

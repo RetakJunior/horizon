@@ -371,7 +371,7 @@ fn new_code(
     }
     let next = if native {
         format!(
-            "horizon-launcher native-build {} --instance <instance> --trust-native-code",
+            "rea-launcher native-build {} --instance <instance> --trust-native-code",
             dir.display()
         )
     } else {
@@ -475,7 +475,7 @@ impl std::fmt::Display for RunError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             Self::CodeMod => f.write_str(
-                "code mods run through the launcher's native build: horizon-launcher native-build . --trust-native-code (docs/modding/src/how-to/native-mods.md)",
+                "code mods run through the launcher's native build: rea-launcher native-build . --trust-native-code (docs/modding/src/how-to/native-mods.md)",
             ),
             Self::Build(error) => f.write_str(error),
             Self::Launch { game, error } => write!(

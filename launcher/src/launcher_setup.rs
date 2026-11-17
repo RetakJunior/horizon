@@ -237,6 +237,7 @@ impl Launcher {
             client_run: None,
             client_vars: Vec::new(),
             collection: collection::Collection::load(),
+            migration_message: None,
             agents: agents_page::AgentsUi::default(),
             playing: None,
             official_players: None,

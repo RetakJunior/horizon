@@ -41,7 +41,7 @@ pub(super) fn github_native(
             o.sha256
         );
     }
-    println!("Build it next: horizon-launcher native-build --trust-native-code");
+    println!("Build it next: rea-launcher native-build --trust-native-code");
     Ok(())
 }
 

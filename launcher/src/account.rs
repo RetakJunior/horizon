@@ -119,7 +119,7 @@ fn builder() -> ureq::AgentBuilder {
         .timeout(Duration::from_secs(20))
         .timeout_connect(Duration::from_secs(10))
         .resolver(Interleaved(System))
-        .user_agent(&format!("horizon-launcher/{}", crate::backend::VERSION))
+        .user_agent(&format!("rea-launcher/{}", crate::backend::VERSION))
 }
 
 /// A request to `url`: the launcher's user agent, a 20 s timeout, and the player's proxy when one
@@ -493,7 +493,10 @@ impl Account {
     pub fn new_offline(name: &str) -> Result<Self, String> {
         let name = name.trim();
         if !valid_player_name(name) {
-            return Err(crate::i18n::tr("A Minecraft name has 3 to 16 letters, digits or underscores.").into());
+            return Err(crate::i18n::tr(
+                "A Minecraft name has 3 to 16 letters, digits or underscores.",
+            )
+            .into());
         }
         let uuid = format!("{:032x}", horizon_platform::protocol::offline_uuid(name));
         Ok(Self {
@@ -1115,7 +1118,7 @@ fn machine_id() -> Option<Vec<u8>> {
 fn file_key(install_secret: &[u8; 32]) -> chacha20poly1305::Key {
     use sha2::Digest;
     let mut hash = sha2::Sha256::new();
-    hash.update(b"horizon-launcher account-secrets v2");
+    hash.update(b"rea-launcher account-secrets v2");
     let id = machine_id().unwrap_or_default();
     hash.update((id.len() as u64).to_le_bytes());
     hash.update(&id);
@@ -1128,7 +1131,7 @@ fn file_key(install_secret: &[u8; 32]) -> chacha20poly1305::Key {
 fn file_key_v1() -> chacha20poly1305::Key {
     use sha2::Digest;
     let mut hash = sha2::Sha256::new();
-    hash.update(b"horizon-launcher account-secrets v1");
+    hash.update(b"rea-launcher account-secrets v1");
     if let Some(id) = machine_id() {
         hash.update(id);
     }
@@ -1218,7 +1221,7 @@ impl SecretStore for SystemStore {
             let attributes = vec![("service", SERVICE), ("account", key)];
             keyring
                 .create_item(
-                    "Horizon launcher: Minecraft account",
+                    "REa Launcher: Minecraft account",
                     &attributes,
                     secret.as_bytes(),
                     true,

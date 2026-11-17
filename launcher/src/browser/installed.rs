@@ -389,7 +389,7 @@ pub fn install_datapack(
         return Err(format!("{} isn't a data pack.", project.title));
     }
     let folder = std::env::temp_dir().join(format!(
-        "horizon-launcher-datapack-{}-{}",
+        "rea-launcher-datapack-{}-{}",
         std::process::id(),
         project.id
     ));

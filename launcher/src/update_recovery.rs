@@ -17,19 +17,19 @@ mod tests {
     #[test]
     fn package_roots_are_matched_as_path_components() {
         for path in [
-            "/usr/bin/horizon-launcher",
-            "/nix/store/hash-horizon/bin/horizon-launcher",
-            "/app/bin/horizon-launcher",
+            "/usr/bin/rea-launcher",
+            "/nix/store/hash-horizon/bin/rea-launcher",
+            "/app/bin/rea-launcher",
         ] {
             assert!(package_managed(Path::new(path)), "{path}");
         }
         for path in [
-            "/home/player/Downloads/Horizon.AppImage",
-            "/usr/local/bin/horizon-launcher",
-            "/usr-backup/horizon-launcher",
-            "/nix/storehouse/horizon-launcher",
-            "/application/horizon-launcher",
-            "/tmp/.mount_Horizon/usr/bin/horizon-launcher",
+            "/home/player/Downloads/REa Launcher.AppImage",
+            "/usr/local/bin/rea-launcher",
+            "/usr-backup/rea-launcher",
+            "/nix/storehouse/rea-launcher",
+            "/application/rea-launcher",
+            "/tmp/.mount_Horizon/usr/bin/rea-launcher",
         ] {
             assert!(!package_managed(Path::new(path)), "{path}");
         }

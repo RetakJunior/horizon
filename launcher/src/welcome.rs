@@ -1,16 +1,13 @@
-//! The first-run welcome: before the data question, the player picks how the launcher looks:
-//! theme, accent, each flourish (glow, gradients, the hover shine), motion and the "I'm playing"
-//! ping (pinned above Continue, with what it sends one click away). The rows are Settings' own,
-//! so a choice made here is the same one Settings shows later.
+//! The first-run welcome: choose the REa Launcher look, then optionally import old launcher
+//! settings and instance metadata. Its appearance rows are the same ones Settings uses later.
 use super::*;
 use crate::glass_ui::{self as ui, white};
 use horizon_theme::glass::{ink, radius};
 
 impl Launcher {
-    /// Whether the welcome covers the window: a first run (the data question not answered yet),
-    /// not welcomed before, and the opening over.
+    /// Whether the welcome covers the window: the opening is over and it has not been completed.
     pub(crate) fn welcoming(&self) -> bool {
-        self.opening.is_none() && !self.settings.welcomed && self.collection.consent.needs_asking()
+        self.opening.is_none() && !self.settings.welcomed
     }
 
     /// Escape answers the welcome as Continue does: the look as it is now stays.
@@ -25,47 +22,11 @@ impl Launcher {
 
     pub(crate) fn welcome_screen(&mut self, cx: &mut Context<Self>) -> Stateful<Div> {
         let t = self.theme;
-        let (rows, ping) = ui::flat_rows(|| {
+        let rows = ui::flat_rows(|| {
             let mut rows = vec![self.launcher_theme_row(cx), self.glass_accent_row(cx)];
             rows.push(self.motion_row(cx));
             rows.extend(self.effects_rows(cx));
-            // Not in the scrolling list: it stays in view above Continue.
-            let detail = div()
-                .flex()
-                .flex_col()
-                .gap(px(6.))
-                .child(tr(
-                    "While you play, the game tells Horizon you're playing, so the launcher can show how many people play right now. It's anonymous, it's on now, and you can turn it off here or in Settings.",
-                ))
-                .child(
-                    div()
-                        .id("welcome-ping-detail")
-                        .text_color(t.accent)
-                        .cursor_pointer()
-                        .hover(|s| s.opacity(0.8))
-                        .child(tr(if self.collection.welcome_detail {
-                            "Hide what's sent"
-                        } else {
-                            "What's sent?"
-                        }))
-                        .on_click(cx.listener(|this, _: &ClickEvent, _, cx| {
-                            this.collection.welcome_detail = !this.collection.welcome_detail;
-                            cx.notify();
-                        })),
-                )
-                .children(
-                    self.collection
-                        .welcome_detail
-                        .then(|| div().child(tr(telemetry::PING))),
-                );
-            let ping = index_row(
-                0,
-                tr("Count me in as \"playing now\""),
-                Some(detail.into_any_element()),
-                Some(self.ping_switch("welcome-ping", cx).into_any_element()),
-                &t,
-            );
-            (rows, ping)
+            rows
         });
         let head = div()
             .flex()
@@ -82,10 +43,10 @@ impl Launcher {
                     .text_size(px(28.))
                     .line_height(px(34.))
                     .text_color(white(ink::FULL))
-                    .child(tr("Make Horizon yours")),
+                    .child(tr("Make REa Launcher yours")),
             )
             .child(ui::text(14., FontWeight::NORMAL, ink::BODY).child(tr(
-                "Pick a look to start with. The \"I'm playing\" ping is already on; you can turn it off below. You can change all of this later in Settings.",
+                "Choose a look to start with. You can change it later in Settings. Sign in with Microsoft when you are ready to play.",
             )));
         let body = div()
             .id("welcome-body")
@@ -95,7 +56,32 @@ impl Launcher {
             .min_h_0()
             .px(px(16.))
             .overflow_y_scroll()
-            .children(rows);
+            .children(rows)
+            .child(
+                button("welcome-import", "Import Horizon settings", Kind::Secondary, &t)
+                    .tooltip(ui::tip(tr("Copy settings and instance names from the previous launcher; account and game files are not copied.")))
+                    .on_click(cx.listener(|this, _: &ClickEvent, window, cx| {
+                        match horizon_launcher::migration::import_legacy_data() {
+                            Ok(0) => {
+                                this.migration_message = Some(tr("No new settings or instance list were found.").into());
+                            }
+                            Ok(count) => {
+                                this.settings = Settings::load();
+                                this.settings.welcomed = true;
+                                this.save_settings();
+                                this.theme = this.settings_theme(window);
+                                this.migration_message = Some(trf(
+                                    "Imported {count} settings and profile files. Sign in with Microsoft when you are ready to play.",
+                                    &[("count", &count.to_string())],
+                                ));
+                            }
+                            Err(error) => {
+                                this.migration_message = Some(trf("Import failed: {reason}", &[("reason", &error)]));
+                            }
+                        }
+                        cx.notify();
+                    })),
+            );
         // A fade at the foot says the list goes on under it.
         let fade = div()
             .absolute()
@@ -118,18 +104,6 @@ impl Launcher {
             .flex_1()
             .min_h_0()
             .child(fade);
-        // Pinned between the scrolling list and the buttons, so it is seen before Continue.
-        let ping = div()
-            .flex()
-            .flex_col()
-            .flex_none()
-            .max_h(px(280.))
-            .overflow_hidden()
-            .px(px(16.))
-            .py(px(8.))
-            .border_t_1()
-            .border_color(white(0.1))
-            .child(ping);
         let foot = div()
             .flex()
             .flex_none()
@@ -155,6 +129,9 @@ impl Launcher {
                                 &((p.clamp(0., 1.) * 100.).round() as u32).to_string(),
                             )],
                         ))
+                    }))
+                    .children(self.migration_message.as_ref().map(|message| {
+                        ui::text(12., FontWeight::NORMAL, ink::BODY).child(message.clone())
                     }))
                     .child(
                         ui::text(12., FontWeight::NORMAL, ink::BODY)
@@ -190,7 +167,6 @@ impl Launcher {
             .max_h(px(700.))
             .child(head)
             .child(body)
-            .child(ping)
             .child(foot);
         div()
             .id("welcome")

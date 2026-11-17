@@ -3405,8 +3405,8 @@ mod tests {
             let status = std::process::Command::new(std::env::current_exe().unwrap())
                 .args(["--exact", "servers_page::tests::managed_start_and_restart_require_consent_before_running_the_supervisor", "--nocapture"])
                 .env(CHILD, "1")
-                .env("HORIZON_LAUNCHER_HOME", root.path().join("launcher"))
-                .env("HORIZON_HOME", root.path().join("cache"))
+                .env("REA_LAUNCHER_HOME", root.path().join("launcher"))
+                .env("REA_HOME", root.path().join("cache"))
                 .status().unwrap();
             assert!(status.success());
             return;

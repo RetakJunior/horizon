@@ -72,7 +72,7 @@ fn run_launcher() {
     // What the launcher downloads goes through the player's proxy, if they set one: the parts
     // that build their own agents (`horizon-port-pack`) are told before anything starts.
     horizon_launcher::proxy::announce(horizon_launcher::backend::Settings::load().proxy);
-    // The setup wizard and `horizon-launcher.exe uninstall` (what Control Panel runs) are windows,
+    // The setup wizard and `rea-launcher.exe uninstall` (what Control Panel runs) are windows,
     // not CLI commands: asked of the CLI parser first, `uninstall` was refused as an unknown
     // subcommand, with the error going to the console that Control Panel's start doesn't have.
     #[cfg(windows)]
@@ -117,7 +117,7 @@ fn run_launcher() {
                 })
             });
             cx.set_menus(menus());
-            // The setup exe (and `horizon-launcher.exe uninstall`) opens its own window instead.
+            // The setup exe (and `rea-launcher.exe uninstall`) opens its own window instead.
             #[cfg(windows)]
             if let Some(mode) = setup_window {
                 setup_page::open(mode, cx);
@@ -133,7 +133,7 @@ fn run_launcher() {
                     titlebar: Some(titlebar::options()),
                     #[cfg(target_os = "linux")]
                     window_decorations: Some(gpui::WindowDecorations::Client),
-                    app_id: Some("horizon-launcher".into()),
+                    app_id: Some("rea-launcher".into()),
                     // GPUI draws a window without focus at most every 33 ms to save energy. A
                     // benchmark's window often starts without it (KDE keeps focus from windows
                     // a background process opens), and it measures drawing, not that limit.

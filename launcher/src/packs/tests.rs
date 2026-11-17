@@ -2,10 +2,8 @@ use super::*;
 use std::io::Write;
 
 fn scratch(name: &str) -> PathBuf {
-    let root = std::env::temp_dir().join(format!(
-        "horizon-launcher-packs-{name}-{}",
-        std::process::id()
-    ));
+    let root =
+        std::env::temp_dir().join(format!("rea-launcher-packs-{name}-{}", std::process::id()));
     let _ = fs::remove_dir_all(&root);
     fs::create_dir_all(&root).unwrap();
     root

@@ -38,7 +38,7 @@ pub(super) fn startup_note() -> Option<String> {
 }
 
 fn environment_blocked() -> bool {
-    ["HORIZON_LAUNCHER_HOME", "HORIZON_HOME"]
+    ["REA_LAUNCHER_HOME", "REA_HOME"]
         .iter()
         .any(|key| std::env::var_os(key).is_some_and(|value| !value.is_empty()))
 }
@@ -69,7 +69,7 @@ impl Launcher {
 
     fn location_blocked(&self) -> Option<String> {
         if environment_blocked() {
-            Some(tr("Data folders are set by HORIZON_LAUNCHER_HOME or HORIZON_HOME. Remove these environment overrides and restart the launcher before moving data here.").into())
+            Some(tr("Data folders are set by REA_LAUNCHER_HOME or REA_HOME. Remove these environment overrides and restart the launcher before moving data here.").into())
         } else if self.location_busy() {
             Some(tr("Close the game and servers, and wait for downloads, builds, imports and sign-in to finish before moving data.").into())
         } else {

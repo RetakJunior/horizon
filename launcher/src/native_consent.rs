@@ -75,8 +75,8 @@ mod tests {
             let status = std::process::Command::new(std::env::current_exe().unwrap())
                 .args(["--exact", "native_consent::tests::cancel_escape_and_allow_consume_only_the_pending_toggle"])
                 .env("HORIZON_CONSENT_TEST_CHILD", "1")
-                .env("HORIZON_LAUNCHER_HOME", home.path())
-                .env("HORIZON_HOME", home.path())
+                .env("REA_LAUNCHER_HOME", home.path())
+                .env("REA_HOME", home.path())
                 .status().unwrap();
             assert!(status.success());
             return;

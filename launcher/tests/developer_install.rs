@@ -6,8 +6,8 @@ use std::fs;
 fn instance_status_and_runtime_keep_developer_provenance() {
     let home = tempfile::tempdir().unwrap();
     for name in [
-        "HORIZON_HOME",
-        "HORIZON_LAUNCHER_HOME",
+        "REA_HOME",
+        "REA_LAUNCHER_HOME",
         "XDG_DATA_HOME",
         "XDG_CONFIG_HOME",
         "HORIZON_LAUNCHER_TRASH",

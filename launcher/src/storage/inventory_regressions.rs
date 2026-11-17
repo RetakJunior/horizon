@@ -179,8 +179,11 @@ fn capable_units_delete_only_after_the_last_game_lease_and_mixed_builds_stay_res
         std::os::unix::fs::symlink(&real, &alias).unwrap();
         let mut actor = Command::new(std::env::current_exe().unwrap());
         actor.args(["--exact", "storage::inventory::regressions::capable_units_delete_only_after_the_last_game_lease_and_mixed_builds_stay_residual"])
-            .env("CLASSIFICATION_ROOT", &alias).env("HORIZON_LAUNCHER_HOME", alias.join("data"))
+            .env("CLASSIFICATION_ROOT", &alias)
+            .env("HORIZON_LAUNCHER_HOME", alias.join("data"))
             .env("HORIZON_HOME", alias.join("data/cache"))
+            .env("REA_LAUNCHER_HOME", alias.join("data"))
+            .env("REA_HOME", alias.join("data/cache"))
             .env("XDG_DATA_HOME", alias.join("xdg-data")).env("XDG_CONFIG_HOME", alias.join("xdg-config"))
             .env("HORIZON_LAUNCHER_TRASH", alias.join("trash")).env("HORIZON_LAUNCHER_CLIPBOARD", alias.join("clipboard"))
             .env("HORIZON_LAUNCHER_DESKTOP", alias.join("desktop"))
@@ -265,6 +268,8 @@ fn capable_units_delete_only_after_the_last_game_lease_and_mixed_builds_stay_res
         game.args(["--exact", "storage::inventory::regressions::capable_units_delete_only_after_the_last_game_lease_and_mixed_builds_stay_residual"])
             .env("CLASSIFICATION_GAME", "1")
             .env("RUST_TEST_NOCAPTURE", "1")
+            // The fake game process models the launcher's REA_HOME -> HORIZON_HOME bridge.
+            .env("HORIZON_HOME", &cache)
             .current_dir(root.join("work"));
         game
     };

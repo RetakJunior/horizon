@@ -143,7 +143,7 @@ mod tests {
         assert!(refuse("socks5://").is_some());
     }
 
-    /// The reason is shown under the field and printed by `horizon-launcher settings set`.
+    /// The reason is shown under the field and printed by `rea-launcher settings set`.
     #[test]
     fn a_refused_address_keeps_its_credentials_to_itself() {
         let why = refuse("socks3://user:secret@127.0.0.1:7891").unwrap();

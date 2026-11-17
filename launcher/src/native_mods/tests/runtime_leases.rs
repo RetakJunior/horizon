@@ -14,8 +14,8 @@ fn fresh_native_install_starts_directly_without_a_launcher_launch() {
                 "native_mods::runtime_leases_tests::fresh_native_install_starts_directly_without_a_launcher_launch",
             ])
             .env("DIRECT_INSTALL_ROOT", root.path())
-            .env("HORIZON_LAUNCHER_HOME", root.path())
-            .env("HORIZON_HOME", root.path().join("home"))
+            .env("REA_LAUNCHER_HOME", root.path())
+            .env("REA_HOME", root.path().join("home"))
             .env("XDG_DATA_HOME", root.path().join("xdg-data"))
             .env("XDG_CONFIG_HOME", root.path().join("xdg-config"))
             .env("HORIZON_LAUNCHER_TRASH", root.path().join("trash"))

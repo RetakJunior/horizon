@@ -55,6 +55,16 @@ pub fn prepare_launch(
     permission: Permission<'_>,
 ) -> Result<(), LaunchError> {
     launch::apply_environment(command, launch);
+    // The upstream game parser still reads HORIZON_HOME. Let the new launcher-facing override
+    // win when it is present, while preserving an explicit legacy override for existing scripts.
+    let rea_home = command
+        .get_envs()
+        .find(|(key, _)| *key == std::ffi::OsStr::new("REA_HOME"))
+        .map(|(_, value)| value.map(std::ffi::OsStr::to_owned))
+        .unwrap_or_else(|| std::env::var_os("REA_HOME"));
+    if let Some(home) = rea_home {
+        command.env("HORIZON_HOME", home);
+    }
     let command_error = |source| LaunchError::Command {
         program: command.get_program().into(),
         source,

@@ -83,7 +83,8 @@ in_shell() { if [ "$(uname)" = Linux ] && ! pkg-config --exists xkbcommon 2>/dev
 # The launcher's tests write where the launcher keeps its data: the native build log, the build lease and the native
 # build cache it trims, versions. As every run (AGENTS.md), they get a scratch home, removed afterwards, never the
 # player's own (#16877). A step that can't make one stops: the tests would use the player's data.
-LAUNCHER_TEST_HOME = (("HORIZON_LAUNCHER_HOME", "launcher"), ("HORIZON_HOME", "game"),
+LAUNCHER_TEST_HOME = (("REA_LAUNCHER_HOME", "launcher"), ("HORIZON_LAUNCHER_HOME", "launcher"),
+                      ("HORIZON_HOME", "game"),
                       ("HORIZON_LAUNCHER_LOCATION_FILE", "location.json"), ("XDG_DATA_HOME", "data"),
                       ("XDG_CONFIG_HOME", "config"), ("HORIZON_LAUNCHER_TRASH", "trash"),
                       ("HORIZON_LAUNCHER_CLIPBOARD", "clipboard"), ("HORIZON_LAUNCHER_DESKTOP", "desktop"))

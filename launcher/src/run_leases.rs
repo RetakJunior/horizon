@@ -96,7 +96,7 @@ pub(crate) fn game_units(command: &Command, executable: &Path) -> Result<Vec<Cla
 /// Launcher-owned primitives-in-use; this is not a standalone cleanup safety guarantee.
 pub(crate) fn shared(command: &Command) -> Result<Vec<Claim>, Error> {
     let logs = override_value(command, "HORIZON_HOME").map_or_else(
-        || std::env::var_os("HORIZON_HOME").map(std::path::PathBuf::from),
+        || std::env::var_os("REA_HOME").map(std::path::PathBuf::from),
         |value| value.map(std::path::PathBuf::from),
     );
     let source = override_value(command, SOURCE)

@@ -439,7 +439,7 @@ mod tests {
             let output = std::process::Command::new(std::env::current_exe().unwrap())
                 .args(["--exact", "native_mods::registry_plan::tests::fetch_retains_actual_feature_closure_and_excludes_unreachable_pins", "--nocapture"])
                 .env(ACTOR, "1")
-                .env("HORIZON_LAUNCHER_HOME", home.path())
+                .env("REA_LAUNCHER_HOME", home.path())
                 .output().unwrap();
             let stdout = String::from_utf8(output.stdout).unwrap();
             let stderr = String::from_utf8_lossy(&output.stderr);

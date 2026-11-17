@@ -618,7 +618,7 @@ mod tests {
     #[test]
     fn jars_only_curseforge_serves_are_left_off_as_coming_soon() {
         use horizon_port_pack::fetch::Outcome;
-        let work = std::env::temp_dir().join(format!("horizon-launcher-cf-{}", std::process::id()));
+        let work = std::env::temp_dir().join(format!("rea-launcher-cf-{}", std::process::id()));
         let _ = fs::remove_dir_all(&work);
         fs::create_dir_all(&work).unwrap();
         pipeline::write_json(&work.join("pack.json"), &Pack::default()).unwrap();
@@ -645,8 +645,7 @@ mod tests {
 
     #[test]
     fn a_profile_has_its_own_home_and_mods() {
-        let root =
-            std::env::temp_dir().join(format!("horizon-launcher-pack-{}", std::process::id()));
+        let root = std::env::temp_dir().join(format!("rea-launcher-pack-{}", std::process::id()));
         let _ = fs::remove_dir_all(&root);
         let work = root.join("ports/small");
         let mut cmd = Command::new("true");
@@ -686,7 +685,7 @@ mod tests {
     #[test]
     fn resource_only_profile_can_play_without_enabling_or_overwriting_packs() {
         let root = std::env::temp_dir().join(format!(
-            "horizon-launcher-resource-profile-{}",
+            "rea-launcher-resource-profile-{}",
             std::process::id()
         ));
         let work = root.join("ports/looks");
@@ -730,7 +729,7 @@ mod tests {
     #[test]
     fn a_profile_with_only_data_packs_plays_and_its_game_folder_holds_them() {
         let root = std::env::temp_dir().join(format!(
-            "horizon-launcher-datapack-profile-{}",
+            "rea-launcher-datapack-profile-{}",
             std::process::id()
         ));
         let _ = fs::remove_dir_all(&root);
@@ -758,7 +757,7 @@ mod tests {
     #[test]
     fn resource_downloads_enable_port_even_when_no_mods_are_portable() {
         let root = std::env::temp_dir().join(format!(
-            "horizon-launcher-resource-index-{}",
+            "rea-launcher-resource-index-{}",
             std::process::id()
         ));
         fs::create_dir_all(&root).unwrap();
@@ -782,10 +781,8 @@ mod tests {
     /// for 1.20 or older. Those are not carried, so the pack does not list them as portable.
     #[test]
     fn mods_made_for_1_20_are_not_portable() {
-        let root = std::env::temp_dir().join(format!(
-            "horizon-launcher-old-layout-{}",
-            std::process::id()
-        ));
+        let root =
+            std::env::temp_dir().join(format!("rea-launcher-old-layout-{}", std::process::id()));
         fs::create_dir_all(&root).unwrap();
         pipeline::write_json(&root.join("pack.json"), &Pack::default()).unwrap();
         let record = |key: &str| horizon_port_pack::inventory::Record {

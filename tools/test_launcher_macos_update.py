@@ -88,7 +88,7 @@ fn main() {
                     _ => Err("diagnostic key absence not verified".into()),
                 }
             },
-            "exec" => Err(Command::new(app.join("Contents/MacOS/horizon-launcher"))
+            "exec" => Err(Command::new(app.join("Contents/MacOS/rea-launcher"))
                 .arg(&app).exec().to_string()),
             _ => Err("unknown probe command".into()),
         })();
@@ -110,7 +110,7 @@ def pins(text):
 
 class Peer:
     def __init__(self, app, env):
-        self.proc = subprocess.Popen([str(app / 'Contents/MacOS/horizon-launcher'), str(app)],
+        self.proc = subprocess.Popen([str(app / 'Contents/MacOS/rea-launcher'), str(app)],
                                      env=env, stdin=subprocess.PIPE, stdout=subprocess.PIPE, text=True)
 
     def line(self):
@@ -138,7 +138,7 @@ class Peer:
 
 def keychain_scenario(work, binary, env):
     peers, keys = [], [str(uuid.uuid4()) for _ in range(3)]
-    app = work / 'Applications/Horizon.app'
+    app = work / 'Applications/REa Launcher.app'
     # Recovery custody if an assertion or native permission prompt interrupts the run.
     print(json.dumps({'diagnostic_service': 'dev.playhorizon.launcher.diagnostic',
                       'diagnostic_uuids': keys, 'scratch': str(work)}), flush=True)
@@ -146,10 +146,10 @@ def keychain_scenario(work, binary, env):
     def bundle(path, version):
         (path / 'Contents/MacOS').mkdir(parents=True)
         (path / 'Contents/Resources').mkdir()
-        shutil.copy2(binary, path / 'Contents/MacOS/horizon-launcher')
+        shutil.copy2(binary, path / 'Contents/MacOS/rea-launcher')
         (path / 'Contents/Resources/version').write_text(version)
         (path / 'Contents/Info.plist').write_text('''<?xml version="1.0"?><plist version="1.0"><dict>
-<key>CFBundleExecutable</key><string>horizon-launcher</string>
+<key>CFBundleExecutable</key><string>rea-launcher</string>
 <key>CFBundleIdentifier</key><string>dev.playhorizon.launcher.diagnostic</string>
 <key>CFBundlePackageType</key><string>APPL</string></dict></plist>''')
         run('/usr/bin/codesign', '--force', '--sign', '-', path, env=env)
@@ -162,11 +162,11 @@ def keychain_scenario(work, binary, env):
         return p
 
     def retired():
-        return set(app.parent.glob('.Horizon.app.old-*'))
+        return set(app.parent.glob('.REa Launcher.app.old-*'))
 
     bundle(app, 'v1')
-    v2 = bundle(work / 'v2/Horizon.app', 'v2')
-    v3 = bundle(work / 'v3/Horizon.app', 'v3')
+    v2 = bundle(work / 'v2/REa Launcher.app', 'v2')
+    v3 = bundle(work / 'v3/REa Launcher.app', 'v3')
     try:
         a, b = start(), start()  # two users of the same original executable, like GUI + MCP
         a.ask(f'update {v2}')
@@ -241,7 +241,7 @@ def main():
     with tempfile.TemporaryDirectory(prefix='horizon-macos-update-') as tmp:
         work = Path(tmp)
         env = dict(os.environ, CARGO_BUILD_JOBS='1', CARGO_TARGET_DIR=str(work / 'target'))
-        for key in ['HORIZON_HOME', 'HORIZON_LAUNCHER_HOME', 'XDG_DATA_HOME', 'XDG_CONFIG_HOME',
+        for key in ['HORIZON_HOME', 'HORIZON_LAUNCHER_HOME', 'REA_LAUNCHER_HOME', 'XDG_DATA_HOME', 'XDG_CONFIG_HOME',
                     'HORIZON_LAUNCHER_TRASH', 'HORIZON_LAUNCHER_CLIPBOARD', 'HORIZON_LAUNCHER_DESKTOP']:
             env[key] = str(work / key.lower())
             Path(env[key]).mkdir()

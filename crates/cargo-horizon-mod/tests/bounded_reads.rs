@@ -15,7 +15,7 @@ impl Fixture {
         Self(p)
     }
     fn run(&self, args: &[&str]) -> String {
-        self.run_launcher(args, "horizon-launcher")
+        self.run_launcher(args, "rea-launcher")
     }
     fn run_launcher(&self, args: &[&str], launcher: &str) -> String {
         let mut child = Command::new(env!("CARGO_BIN_EXE_cargo-horizon-mod"))

@@ -437,7 +437,7 @@ fn a_config_folder_behind_a_link_still_opens() {
     fs::create_dir_all(&real).unwrap();
     let config = temp.0.join("config");
     std::os::unix::fs::symlink(&real, &config).unwrap();
-    let bootstrap = config.join("horizon-launcher-location/location.json");
+    let bootstrap = config.join("rea-launcher/location.json");
 
     assert_eq!(resolve_at(&bootstrap), Ok(None));
     assert_eq!(startup_error_at(&bootstrap), None);
@@ -461,7 +461,7 @@ fn a_config_folder_behind_a_link_still_opens() {
 
     // The lock behind the link is the one a worker takes through the real path.
     let reader = acquire_lock_at(&bootstrap).unwrap();
-    assert!(lock_at(&real.join("horizon-launcher-location/location.json"), true).is_err());
+    assert!(lock_at(&real.join("rea-launcher/location.json"), true).is_err());
     drop(reader);
 }
 
@@ -486,7 +486,7 @@ fn a_link_above_the_root_is_followed() {
 
 /// No unit test reaches the player's real folders: a test's launcher data, build folders and
 /// native build log are all under the temporary folder ([`test_home`]), or under the home a run
-/// names in `HORIZON_LAUNCHER_HOME`, which takes its place (`backend::data_dir`;
+/// names in `REA_LAUNCHER_HOME`, which takes its place (`backend::data_dir`;
 /// `tools/pr_ready.py` names one for the launcher's tests, #16877).
 #[test]
 fn unit_tests_never_resolve_the_real_profile() {
@@ -496,7 +496,7 @@ fn unit_tests_never_resolve_the_real_profile() {
         crate::native_mods::log_path(),
     ];
     // The named home as given (the data folder) and as the build folder resolves it.
-    let homes = match std::env::var_os("HORIZON_LAUNCHER_HOME").filter(|h| !h.is_empty()) {
+    let homes = match std::env::var_os("REA_LAUNCHER_HOME").filter(|h| !h.is_empty()) {
         Some(home) => {
             let home = PathBuf::from(home);
             let real = home.canonicalize().map(crate::backend::plain);

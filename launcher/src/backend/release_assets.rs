@@ -6,31 +6,31 @@ pub const PLATFORMS: [(&str, &str, &str, &str); 5] = [
         "linux",
         "x86_64",
         "horizon-linux-x86_64.tar.gz",
-        "horizon-launcher-linux-x86_64.tar.gz",
+        "rea-launcher-linux-x86_64.tar.gz",
     ),
     (
         "macos",
         "aarch64",
         "horizon-macos-arm64.zip",
-        "horizon-launcher-macos-arm64.zip",
+        "rea-launcher-macos-arm64.zip",
     ),
     // Intel Macs (arismoko/horizon#1161).
     (
         "macos",
         "x86_64",
         "horizon-macos-x64.zip",
-        "horizon-launcher-macos-x64.zip",
+        "rea-launcher-macos-x64.zip",
     ),
     (
         "windows",
         "x86_64",
         "horizon-windows-x64.zip",
-        "horizon-launcher-windows-x64.zip",
+        "rea-launcher-windows-x64.zip",
     ),
     (
         "windows",
         "aarch64",
         "horizon-windows-arm64.zip",
-        "horizon-launcher-windows-arm64.zip",
+        "rea-launcher-windows-arm64.zip",
     ),
 ];

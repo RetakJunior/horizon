@@ -19,9 +19,12 @@ const CLIENT: &str = "horizon-client.exe";
 const CLIENT: &str = "horizon-client";
 
 pub fn launcher_home() -> PathBuf {
-    match std::env::var_os("HORIZON_LAUNCHER_HOME").filter(|h| !h.is_empty()) {
+    match std::env::var_os("REA_LAUNCHER_HOME")
+        .or_else(|| std::env::var_os("HORIZON_LAUNCHER_HOME"))
+        .filter(|h| !h.is_empty())
+    {
         Some(h) => PathBuf::from(h),
-        None => data_dir().join("horizon-launcher"),
+        None => data_dir().join("rea-launcher"),
     }
 }
 /// `v2026.10.13.1` gives [2026, 10, 13, 1]; a pre-release suffix is ignored.
@@ -118,7 +121,7 @@ pub fn find(
         }
         None => tags.first().cloned().ok_or_else(|| {
             format!(
-                "no Horizon found: no horizon-client beside horizon-ctl and no version installed by the launcher in {}. Install one with the launcher (horizon-launcher install latest) or pass --game PATH.",
+                "no Horizon found: no horizon-client beside horizon-ctl and no version installed by the launcher in {}. Install one with REa Launcher (rea-launcher install latest) or pass --game PATH.",
                 versions.display()
             )
         })?,
@@ -127,7 +130,7 @@ pub fn find(
     let install = prepared(&dir, "launcher", Some(tag.clone()));
     if install.resources.is_none() {
         return Err(format!(
-            "{tag} is installed but not prepared; prepare it in the launcher first (horizon-launcher prepare {tag})"
+            "{tag} is installed but not prepared; prepare it in REa Launcher first (rea-launcher prepare {tag})"
         ));
     }
     Ok(install)

@@ -1256,7 +1256,7 @@ enum PlayItem {
 
 /// The command that plays instance `id` without the window, as its desktop shortcut runs it.
 fn launch_command(id: &str) -> String {
-    format!("horizon-launcher play --instance {id}")
+    format!("rea-launcher play --instance {id}")
 }
 
 #[cfg(test)]

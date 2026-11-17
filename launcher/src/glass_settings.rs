@@ -33,11 +33,7 @@ const CREDIT_URL: &str = horizon_addresses::LAUNCHER_LOOK_CREDIT;
 /// What the search finds in each section, in [`SECTIONS`]' order: its rows' names and words a
 /// player may look for them by. English; a query matches them and their translation.
 const INDEX: [&[&str]; 10] = [
-    &[
-        "Language",
-        "While playing",
-        "Show the Horizon logo at startup",
-    ],
+    &["Language", "While playing", "Show REa Launcher at startup"],
     &[
         "Theme",
         "Accent",
@@ -659,7 +655,7 @@ impl Launcher {
             .child(self.while_playing_row(n, cx))
             .child(index_row(
                 0,
-                tr("Show the Horizon logo at startup"),
+                tr("Show REa Launcher at startup"),
                 note("Shown for a moment while the version list loads."),
                 Some(b.opening.into_any_element()),
                 &t,

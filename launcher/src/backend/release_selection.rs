@@ -4,7 +4,7 @@ use horizon_release_sign::Channel;
 
 /// The snapshot tagged `tag` (`snapshot-<date>-<commit>`, docs/release-flow.md "Snapshot"), looked
 /// up by its tag alone, or nothing for any other tag. No list or update ever offers a snapshot, so a
-/// developer names it (`horizon-launcher install <tag>`); it installs as its tag, which its title
+/// developer names it (`rea-launcher install <tag>`); it installs as its tag, which its title
 /// must name and its SHA256SUMS.v2.sig must be signed for (`backend::install`).
 pub(super) fn snapshot(tag: &str) -> Result<Vec<Release>, String> {
     if Channel::of(tag) != Some(Channel::Snapshot) {

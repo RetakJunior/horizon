@@ -301,7 +301,7 @@ fn copy_release(from: &Path, to: &Path) -> std::io::Result<()> {
     for entry in fs::read_dir(from)? {
         let entry = entry?;
         let name = entry.file_name();
-        if name == ".local" || name == ".installed" || name == "Horizon.app" {
+        if name == ".local" || name == ".installed" || name == "REa Launcher.app" {
             continue;
         }
         let target = to.join(&name);
