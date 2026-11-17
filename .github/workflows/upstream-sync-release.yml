@@ -100,7 +100,7 @@ jobs:
             echo "- Upstream release commit: \`$release_sha\`"
             echo "- Upstream main commit: \`$upstream_main_sha\`"
             echo "- Merged source commit: \`$merged_sha\`"
-            echo "- Versioned platform builds and signed checksums are published with release $release_tag."
+            echo "- Versioned platform builds and SHA256SUMS are published with release $release_tag."
             echo
             echo "## Upstream release notes"
             echo
@@ -251,44 +251,9 @@ jobs:
           if-no-files-found: error
           retention-days: 14
 
-  sign:
+  record-success:
     needs: [prepare, build]
     if: needs.prepare.outputs.should_sync == 'true' && needs.build.result == 'success'
-    runs-on: ubuntu-24.04
-    timeout-minutes: 10
-    # The private release key is held only by this protected environment.
-    environment: release
-    steps:
-      - uses: actions/checkout@v7
-        with:
-          sparse-checkout: tools/ci/sign_release.sh
-          sparse-checkout-cone-mode: false
-          persist-credentials: false
-      - uses: actions/download-artifact@v8
-        with:
-          pattern: REa-${{ needs.prepare.outputs.upstream_tag }}-*
-          path: dist
-          merge-multiple: true
-      - name: Sign release checksums
-        env:
-          RELEASE_SIGNING_KEY: ${{ secrets.RELEASE_SIGNING_KEY }}
-          RELEASE_SIGNING_KEY_NEXT: ${{ secrets.RELEASE_SIGNING_KEY_NEXT }}
-          TAG: ${{ needs.prepare.outputs.release_tag }}
-        run: |
-          set -euo pipefail
-          bash tools/ci/sign_release.sh "$TAG" dist/rea-launcher-*
-          test -f dist/SHA256SUMS
-          test -f dist/SHA256SUMS.sig
-      - uses: actions/upload-artifact@v7
-        with:
-          name: REa-${{ needs.prepare.outputs.upstream_tag }}-signature
-          path: dist/SHA256SUMS*
-          if-no-files-found: error
-          retention-days: 14
-
-  record-success:
-    needs: [prepare, build, sign]
-    if: needs.prepare.outputs.should_sync == 'true' && needs.build.result == 'success' && needs.sign.result == 'success'
     runs-on: ubuntu-24.04
     timeout-minutes: 10
     permissions:
@@ -315,6 +280,12 @@ jobs:
           pattern: REa-${{ needs.prepare.outputs.upstream_tag }}-*
           path: ${{ runner.temp }}/release-assets
           merge-multiple: true
+      - name: Generate SHA256SUMS
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd "$RUNNER_TEMP/release-assets"
+          sha256sum rea-launcher-* > SHA256SUMS
       - name: Publish GitHub Release
         env:
           GH_TOKEN: ${{ github.token }}
@@ -361,6 +332,7 @@ jobs:
               --notes-file "${{ runner.temp }}/rea-sync-source/rea-sync-report.md"
           else
             gh release create "$RELEASE_TAG" "${assets[@]}" \
+              "${{ runner.temp }}/release-assets/SHA256SUMS" \
               --title "REa Launcher $RELEASE_TAG (upstream $UPSTREAM_TAG)" \
               --notes-file "${{ runner.temp }}/rea-sync-source/rea-sync-report.md"
           fi
