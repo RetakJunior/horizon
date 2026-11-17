@@ -100,7 +100,7 @@ jobs:
             echo "- Upstream release commit: \`$release_sha\`"
             echo "- Upstream main commit: \`$upstream_main_sha\`"
             echo "- Merged source commit: \`$merged_sha\`"
-            echo "- Build artifacts are attached to this Actions run for 14 days."
+            echo "- Versioned platform builds and signed checksums are published with release $release_tag."
             echo
             echo "## Upstream release notes"
             echo
@@ -207,8 +207,7 @@ jobs:
           install -m 755 launcher/target/release/rea-launcher "$RUNNER_TEMP/rea-tar/bin/rea-launcher"
           install -m 644 packaging/linux/rea-launcher.desktop "$RUNNER_TEMP/rea-tar/share/applications/rea-launcher.desktop"
           cp -R packaging/icons/hicolor/. "$RUNNER_TEMP/rea-tar/share/icons/hicolor/"
-          tar -czf "out/rea-launcher-${UPSTREAM_TAG}-rea-linux-x86_64.tar.gz" -C "$RUNNER_TEMP/rea-tar" .
-          mv out/rea-launcher-linux-x86_64.AppImage "out/rea-launcher-${UPSTREAM_TAG}-rea-linux-x86_64.AppImage"
+          tar -czf "out/rea-launcher-linux-x86_64.tar.gz" -C "$RUNNER_TEMP/rea-tar" .
       - name: Package Windows installer and portable zip
         if: startsWith(matrix.platform, 'windows-')
         env:
@@ -221,9 +220,11 @@ jobs:
           if [[ -n "$TARGET" ]]; then binary="launcher/target/$TARGET/release/rea-launcher.exe"; fi
           python tools/check_pe_arch.py "$WINDOWS_ARCH" "$binary"
           python tools/check_imports.py "$binary"
-          cp "$binary" "out/rea-launcher-setup-${UPSTREAM_TAG}-rea-windows-${WINDOWS_ARCH}.exe"
+          setup=rea-launcher-setup.exe
+          [[ "$WINDOWS_ARCH" == arm64 ]] && setup=rea-launcher-setup-arm64.exe
+          cp "$binary" "out/$setup"
           cp "$binary" portable/rea-launcher.exe
-          (cd portable && 7z a "../out/rea-launcher-${UPSTREAM_TAG}-rea-windows-${WINDOWS_ARCH}.zip" rea-launcher.exe >/dev/null)
+          (cd portable && 7z a "../out/rea-launcher-windows-${WINDOWS_ARCH}.zip" rea-launcher.exe >/dev/null)
       - name: Install dmgbuild
         if: startsWith(matrix.platform, 'macos-')
         shell: bash
@@ -240,8 +241,9 @@ jobs:
           mkdir -p out
           DMGBUILD="$RUNNER_TEMP/dmg/bin/dmgbuild" packaging/macos/package.sh \
             "launcher/target/release/rea-launcher" "$version" out "$arch"
-          mv "out/rea-launcher-macos-$arch.dmg" "out/rea-launcher-${UPSTREAM_TAG}-rea-$arch.dmg"
-          rm -f "out/rea-launcher-macos-$arch.zip"
+          # package.sh writes both release formats: DMG for installation and ZIP for portable use.
+          test -f "out/rea-launcher-macos-$arch.dmg"
+          test -f "out/rea-launcher-macos-$arch.zip"
       - uses: actions/upload-artifact@v7
         with:
           name: REa-${{ needs.prepare.outputs.upstream_tag }}-${{ matrix.platform }}
@@ -249,9 +251,44 @@ jobs:
           if-no-files-found: error
           retention-days: 14
 
-  record-success:
+  sign:
     needs: [prepare, build]
     if: needs.prepare.outputs.should_sync == 'true' && needs.build.result == 'success'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    # The private release key is held only by this protected environment.
+    environment: release
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          sparse-checkout: tools/ci/sign_release.sh
+          sparse-checkout-cone-mode: false
+          persist-credentials: false
+      - uses: actions/download-artifact@v8
+        with:
+          pattern: REa-${{ needs.prepare.outputs.upstream_tag }}-*
+          path: dist
+          merge-multiple: true
+      - name: Sign release checksums
+        env:
+          RELEASE_SIGNING_KEY: ${{ secrets.RELEASE_SIGNING_KEY }}
+          RELEASE_SIGNING_KEY_NEXT: ${{ secrets.RELEASE_SIGNING_KEY_NEXT }}
+          TAG: ${{ needs.prepare.outputs.release_tag }}
+        run: |
+          set -euo pipefail
+          bash tools/ci/sign_release.sh "$TAG" dist/rea-launcher-*
+          test -f dist/SHA256SUMS
+          test -f dist/SHA256SUMS.sig
+      - uses: actions/upload-artifact@v7
+        with:
+          name: REa-${{ needs.prepare.outputs.upstream_tag }}-signature
+          path: dist/SHA256SUMS*
+          if-no-files-found: error
+          retention-days: 14
+
+  record-success:
+    needs: [prepare, build, sign]
+    if: needs.prepare.outputs.should_sync == 'true' && needs.build.result == 'success' && needs.sign.result == 'success'
     runs-on: ubuntu-24.04
     timeout-minutes: 10
     permissions:
